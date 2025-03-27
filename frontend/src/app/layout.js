@@ -2,11 +2,12 @@
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { useEffect } from "react";
+import NavBar from "./components/NavBar";
 
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
   subsets: ["latin"],
-  weight: ["400", "700"], 
+  weight: ["400", "700"],
 });
 
 export default function RootLayout({ children }) {
@@ -39,7 +40,11 @@ export default function RootLayout({ children }) {
         <title>Nepwork</title>
         <link rel="icon" href="/darkLogo.png" sizes="48x48" />
       </head>
-      <body className={`${notoSans.variable} antialiased`}>{children}</body>
+
+      <body className={`${notoSans.variable} antialiased`}>
+        <NavBar />
+        {children}
+      </body>
     </html>
   );
 }
