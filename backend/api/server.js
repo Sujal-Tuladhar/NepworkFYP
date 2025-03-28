@@ -3,9 +3,12 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import testRoutes from "./routes/test.route.js";
+import authRoutes from "./routes/auth.route.js";
+
 dotenv.config();
 const app = express();
-//Conencting Frontend to backend #credinatial true allows to send the cookies,tokens
+//Conencting Frontend to backend #Credinatial true allows to send the cookies,tokens
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 // Parses JSON request bodies into req.body.
 app.use(express.json());
@@ -38,12 +41,22 @@ mongoose.connection.on("disconnected", () => {
 //Calling the function to connect to the database
 connectDB();
 
+app.use("/api/test", testRoutes);
+
+app.use("/api/auth", authRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Nepwork API Is running");
+});
+
 app.use((err, req, res, next) => {
   const errorStatus = err.status || 500;
   const errorMessage = err.message || "Something went wrong";
   return res.status(errorStatus).send(errorMessage);
 });
 
-app.listen(7700, () => {
-  console.log("🚀 Server started at http://localhost:7700");
+const port = process.env.PORT || 7700;
+
+const server = app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
