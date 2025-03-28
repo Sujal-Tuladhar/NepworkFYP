@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 const NavBar = () => {
   return (
-    <div className=" flex flex-wrap justify-between items-center px-7 py-4 md:px-10">
+    <div className=" flex flex-wrap justify-between items-center px-7 py-4 md:px-10 border-b-2">
       <div className="logo text-[20px] md:text-[25px] font-bold border-t-[2px] border-l-[2px] border-r-[5px] border-b-[5px] border-black rounded-tr-3xl p-1">
         <Link href="/">
           <span className="">NepWork</span>
