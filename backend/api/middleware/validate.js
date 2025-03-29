@@ -4,20 +4,15 @@ import jwt from "jsonwebtoken";
 const validate = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  console.log(authHeader);
 
   if (token == null) return res.status(401).send("Unauthorized");
   jwt.verify(token, process.env.JWT_KEY, async (err, user) => {
     if (err) return res.status(401).send("Unauthorized");
-    console.log(user);
-    console.log("asdasd");
 
     user = user._id;
-
-    console.log(user);
+    // console.log(user);
 
     const userData = await User.findById(user).lean();
-    console.log(userData);
 
     if (!userData) {
       return res.status(401).send("Unauthorized");

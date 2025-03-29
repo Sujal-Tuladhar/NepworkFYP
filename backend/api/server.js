@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import testRoutes from "./routes/test.route.js";
 import authRoutes from "./routes/auth.route.js";
+import userRoutes from "./routes/user.route.js";
 
 dotenv.config();
 const app = express();
@@ -44,6 +45,8 @@ connectDB();
 app.use("/api/test", testRoutes);
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/user", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Nepwork API Is running");
