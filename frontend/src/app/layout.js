@@ -2,7 +2,9 @@
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import NavBar from "./components/NavBar";
+import { AuthProvider } from "./context/AuthContext";
 
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
@@ -11,6 +13,19 @@ const notoSans = Noto_Sans({
 });
 
 export default function RootLayout({ children }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Retrieve token from localStorage or cookies
+    const token = localStorage.getItem("currentUser"); // If using cookies, use `document.cookie`
+
+    // Redirect if user is logged in and tries to access login/register
+    if (token && (pathname === "/login" || pathname === "/register")) {
+      router.push("/");
+    }
+  }, [pathname]); // Runs when pathname changes
+
   useEffect(() => {
     const updateFavicon = () => {
       const darkMode = window.matchMedia(
@@ -22,7 +37,7 @@ export default function RootLayout({ children }) {
       }
     };
 
-    updateFavicon(); // Set favicon on initial load
+    updateFavicon();
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", updateFavicon);
@@ -42,8 +57,10 @@ export default function RootLayout({ children }) {
       </head>
 
       <body className={`${notoSans.variable} antialiased`}>
-        <NavBar />
-        {children}
+        <AuthProvider>
+          <NavBar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

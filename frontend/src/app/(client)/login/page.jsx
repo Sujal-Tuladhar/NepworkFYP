@@ -1,8 +1,60 @@
 "use client";
-import React from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:7700/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      // Call the login function from auth context
+      login(data.token, data.user);
+
+      // Redirect to home page
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="flex items-center justify-center p-35 bg-gray-100 overflow-hidden">
       <div className="w-full max-w-[30rem] p-5 bg-white border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,128,0,0.5)]">
@@ -11,45 +63,56 @@ const LoginPage = () => {
             Login
           </h2>
         </div>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2 mt-3">
-            <label htmlFor="name">E-Mail</label>
+            <label htmlFor="email">E-Mail</label>
             <input
               type="email"
               name="email"
               placeholder="E-Mail"
               className="border-2 p-1"
+              value={formData.email}
+              onChange={handleChange}
+              required
             />
           </div>
           <div className="flex flex-col gap-2 mt-3 mb-6">
-            <label htmlFor="name">Password</label>
+            <label htmlFor="password">Password</label>
             <input
               type="password"
               name="password"
               placeholder="Password"
               className="border-2 p-1"
+              value={formData.password}
+              onChange={handleChange}
+              required
             />
           </div>
 
-          <button className="px-12 py-1.5 bg-blue-200 border-2 rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            Login
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-12 py-1.5 bg-blue-200 border-2 rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
+          {error && <p className="text-red-500 text-center mt-2">{error}</p>}
         </form>
         <div className="mt-4">
           <hr className="border-t-4 border-black mt-5" />
           <div className="flex justify-between items-center mt-2">
             <p className="text-base">
-              Already have an account?{" "}
-              <Link href="/login" className="text-blue-500 underline">
-                Login
+              Don't have an account?{" "}
+              <Link href="/register" className="text-blue-500 underline">
+                Register
               </Link>
             </p>
-            <button
+            <Link
+              href="/forgot"
               className="text-base text-blue-500 hover:underline focus:outline-none"
-              onClick={() => alert("Redirect to forgot password page")}
             >
               Forgot Password?
-            </button>
+            </Link>
           </div>
         </div>
       </div>
