@@ -86,14 +86,40 @@ const NavBar = () => {
             </div>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] py-1 z-50 overflow-hidden ">
+              <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] py-1 z-50 overflow-hidden">
+                <Link
+                  href="/dashboard"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Dashboard
+                </Link>
                 <Link
                   href="/profile"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150   border-b-2"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
                   onClick={() => setShowDropdown(false)}
                 >
                   Profile
                 </Link>
+
+                {user?.isSeller && (
+                  <div>
+                    <Link
+                      href="/gigs"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      All Gig
+                    </Link>
+                    <Link
+                      href="/addGig"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Create Gig
+                    </Link>
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     setShowDropdown(false);
