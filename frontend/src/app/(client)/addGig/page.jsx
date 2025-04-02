@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import upload from "@/app/utils/upload";
 
 const AddGigPage = () => {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     shortTitle: "",
@@ -22,6 +24,18 @@ const AddGigPage = () => {
     revisions: "",
     features: [""],
   });
+
+  const categories = [
+    "Graphics & Design",
+    "Digital Marketing",
+    "Writing & Translation",
+    "Video & Animation",
+    "Music & Audio",
+    "Programming & Tech",
+    "Data",
+    "Business",
+    "Lifestyle",
+  ];
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -72,6 +86,27 @@ const AddGigPage = () => {
   const removeFeature = (index) => {
     const newFeatures = formData.features.filter((_, i) => i !== index);
     setFormData({ ...formData, features: newFeatures });
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const url = await upload(file);
+      if (url) {
+        setFormData({ ...formData, cover: url });
+        toast.success("Image uploaded successfully!");
+      } else {
+        toast.error("Failed to upload image");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -131,6 +166,7 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                placeholder="Enter gig title"
               />
             </div>
 
@@ -146,6 +182,7 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, shortTitle: e.target.value })
                 }
+                placeholder="Enter short title"
               />
             </div>
 
@@ -160,6 +197,7 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
+                placeholder="Describe your gig in detail"
               />
             </div>
 
@@ -174,20 +212,27 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, shortDesc: e.target.value })
                 }
+                placeholder="Brief description for the gig card"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Category</label>
-              <input
-                type="text"
+              <select
                 required
                 className="w-full p-2 border-2 border-black rounded-lg"
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
-              />
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -203,22 +248,38 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, price: e.target.value })
                 }
+                placeholder="Enter price"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                Cover Image URL
+                Cover Image
               </label>
-              <input
-                type="text"
-                required
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.cover}
-                onChange={(e) =>
-                  setFormData({ ...formData, cover: e.target.value })
-                }
-              />
+              <div className="flex gap-4 items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="cover-upload"
+                />
+                <label
+                  htmlFor="cover-upload"
+                  className="flex-1 p-2 border-2 border-black rounded-lg cursor-pointer text-center hover:bg-gray-50"
+                >
+                  {uploading ? "Uploading..." : "Choose Image"}
+                </label>
+                {formData.cover && (
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-black">
+                    <img
+                      src={formData.cover}
+                      alt="Cover Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -234,6 +295,7 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, delivery: e.target.value })
                 }
+                placeholder="Enter delivery time"
               />
             </div>
 
@@ -250,6 +312,7 @@ const AddGigPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, revisions: e.target.value })
                 }
+                placeholder="Enter number of revisions"
               />
             </div>
 
@@ -262,11 +325,12 @@ const AddGigPage = () => {
                     className="flex-1 p-2 border-2 border-black rounded-lg"
                     value={feature}
                     onChange={(e) => handleFeatureChange(index, e.target.value)}
+                    placeholder={`Feature ${index + 1}`}
                   />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="px-3 py-2 bg-red-500 text-white rounded-lg"
+                    className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                   >
                     ×
                   </button>
@@ -275,7 +339,7 @@ const AddGigPage = () => {
               <button
                 type="button"
                 onClick={addFeature}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Add Feature
               </button>

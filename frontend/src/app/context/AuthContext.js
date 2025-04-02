@@ -6,13 +6,26 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Optional loading state
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication status on mount and after any storage changes
     const checkAuth = () => {
       const token = localStorage.getItem("currentUser");
+      const userData = localStorage.getItem("user");
       setIsLoggedIn(!!token);
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     };
 
     checkAuth();
@@ -27,6 +40,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("currentUser", token);
     localStorage.setItem("user", JSON.stringify(user));
     setIsLoggedIn(true);
+    setUser(user);
   };
 
   const logout = async () => {
@@ -43,6 +57,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("currentUser");
       localStorage.removeItem("user");
       setIsLoggedIn(false);
+      setUser(null);
       router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -50,7 +65,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

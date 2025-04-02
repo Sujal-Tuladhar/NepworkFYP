@@ -201,19 +201,41 @@ export default function ProfilePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="underline text-3xl">Profile</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border-2 rounded-sm  p-1.5 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
+            <div className="flex items-center gap-2 border-2 rounded-sm p-1.5 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
               <Label htmlFor="seller-status">Seller Status</Label>
-              <Switch
-                id="seller-status"
-                checked={user?.isSeller}
-                onCheckedChange={toggleSellerStatus}
-                className="
-                    border-2 border-black
-                    data-[state=checked]:bg-gray-200
-                    data-[state=unchecked]:bg-gray-200
-                    [&>span]:border-2 [&>span]:border-black
-                "
-              />
+              <div className="relative group">
+                <Switch
+                  id="seller-status"
+                  checked={user?.isSeller}
+                  onCheckedChange={
+                    user?.isSeller ? undefined : toggleSellerStatus
+                  }
+                  disabled={user?.isSeller}
+                  className={`
+        border-2 border-black
+        data-[state=checked]:bg-gray-200
+        data-[state=unchecked]:bg-gray-200
+        [&>span]:border-2 [&>span]:border-black
+        ${user?.isSeller ? "cursor-not-allowed" : ""}
+      `}
+                />
+                {user?.isSeller && (
+                  <div
+                    className="
+        absolute -top-10 left-1/2 -translate-x-1/2
+        bg-gray-800 text-white text-xs px-2 py-1 rounded
+        opacity-0 group-hover:opacity-100 transition-opacity duration-200
+        whitespace-nowrap pointer-events-none
+        before:content-[''] before:absolute before:top-full before:left-1/2
+        before:-translate-x-1/2 before:border-4 before:border-transparent
+        before:border-t-gray-800
+      "
+                  >
+                    You are already a Seller.
+                    <span className="text-amber-300 block"></span>
+                  </div>
+                )}
+              </div>
             </div>
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogTrigger asChild>

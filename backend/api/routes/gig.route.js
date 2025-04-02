@@ -60,9 +60,102 @@ router.get("/getGig/single/:gigID", validate, async (req, res, next) => {
   }
 });
 
-router.get("/getGigs/", validate, async (req, res, next) => {
-  const gigs = await Gig.find();
-  res.status(200).send(gigs);
+router.get("/getGigs", validate, async (req, res, next) => {
+  try {
+    const {
+      minPrice,
+      maxPrice,
+      sortBy,
+      category,
+      page = 1,
+      limit = 12,
+    } = req.query;
+
+    // Build query
+    const query = {};
+
+    // Price filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    // Category filter
+    if (category) {
+      query.category = category;
+    }
+
+    // Build sort object
+    let sort = {};
+    switch (sortBy) {
+      case "newest":
+        sort = { createdAt: -1 };
+        break;
+      case "popular":
+        sort = { starNumber: -1 };
+        break;
+      case "bestSelling":
+        sort = { totalStars: -1 };
+        break;
+      default:
+        sort = { createdAt: -1 };
+    }
+
+    // Calculate pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Execute query with filters, sort, and pagination
+    const gigs = await Gig.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit));
+
+    // Get total count for pagination
+    const total = await Gig.countDocuments(query);
+
+    res.status(200).json({
+      gigs,
+      pagination: {
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/editGig/:gigId", validate, async (req, res) => {
+  try {
+    const { gigId } = req.params;
+    const updateData = req.body;
+
+    const gig = await Gig.findById(gigId);
+    if (!gig) {
+      return res.status(404).json({ message: "Gig not found" });
+    }
+
+    // Check if the logged-in user owns the gig
+    if (gig.userId.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You can only edit your own gigs" });
+    }
+
+    // Update the gig with new data
+    const updatedGig = await Gig.findByIdAndUpdate(
+      gigId,
+      { $set: updateData },
+      { new: true }
+    );
+
+    res.status(200).json(updatedGig);
+  } catch (error) {
+    console.error("Error in editGig:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 export default router;

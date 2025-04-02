@@ -11,6 +11,11 @@ const Dashboard = () => {
   const [gigs, setGigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total: 0,
+    pages: 0,
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,7 +60,12 @@ const Dashboard = () => {
 
         if (!gigsResponse.ok) throw new Error("Failed to fetch gigs");
         const gigsData = await gigsResponse.json();
-        setGigs(gigsData);
+        setGigs(gigsData.gigs || []);
+        setPagination({
+          page: gigsData.pagination.page,
+          total: gigsData.pagination.total,
+          pages: gigsData.pagination.pages,
+        });
       } catch (error) {
         console.error("Error:", error);
         toast.error("Failed to load dashboard data");
@@ -83,6 +93,8 @@ const Dashboard = () => {
   if (!authChecked) {
     return null;
   }
+
+  const userGigs = gigs.filter((gig) => gig.userId === user?._id);
 
   return (
     <div className="container mx-auto p-6">
@@ -116,13 +128,21 @@ const Dashboard = () => {
       {/* Gigs Section */}
       <div>
         <h2 className="text-2xl font-bold mb-6">Your Gigs</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gigs
-            .filter((gig) => gig.userId === user?._id)
-            .map((gig) => (
+        {userGigs.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold mb-2">No gigs found</h3>
+            <p className="text-gray-600">
+              {user?.isSeller
+                ? "Create your first gig to start selling"
+                : "You haven't created any gigs yet"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {userGigs.map((gig) => (
               <div
                 key={gig._id}
-                className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow"
+                className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
               >
                 {gig.cover && (
                   <img
@@ -137,9 +157,14 @@ const Dashboard = () => {
                 </p>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-lg font-bold">${gig.price}</span>
-                  <span className="text-gray-600">
-                    Delivery: {gig.delivery} days
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-500">★</span>
+                    <span className="text-gray-600">
+                      {gig.starNumber > 0
+                        ? (gig.totalStars / gig.starNumber).toFixed(1)
+                        : "0.0"}
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <h4 className="font-semibold">Features:</h4>
@@ -149,9 +174,14 @@ const Dashboard = () => {
                     ))}
                   </ul>
                 </div>
+                <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+                  <span>Delivery: {gig.delivery} days</span>
+                  <span>Revisions: {gig.revisions}</span>
+                </div>
               </div>
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
