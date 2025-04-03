@@ -11,6 +11,7 @@ const AddGigPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     shortTitle: "",
@@ -97,15 +98,38 @@ const AddGigPage = () => {
       const url = await upload(file);
       if (url) {
         setFormData({ ...formData, cover: url });
-        toast.success("Image uploaded successfully!");
+        toast.success("Cover image uploaded successfully!");
       } else {
-        toast.error("Failed to upload image");
+        toast.error("Failed to upload cover image");
       }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload cover image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImagesUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (formData.images.length >= 3) {
+      toast.error("You can only upload up to 3 images");
+      return;
+    }
+
+    setUploadingImages(true);
+    try {
+      const url = await upload(file);
+      if (!url) throw new Error("Failed to upload image");
+      setFormData({ ...formData, images: [...formData.images, url] });
+      toast.success("Image uploaded successfully!");
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload image");
     } finally {
-      setUploading(false);
+      setUploadingImages(false);
     }
   };
 
@@ -156,166 +180,241 @@ const AddGigPage = () => {
         <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
           <h1 className="text-2xl font-bold mb-6">Create New Gig</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
-              <input
-                type="text"
-                required
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Enter gig title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Short Title
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.shortTitle}
-                onChange={(e) =>
-                  setFormData({ ...formData, shortTitle: e.target.value })
-                }
-                placeholder="Enter short title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Description
-              </label>
-              <textarea
-                required
-                className="w-full p-2 border-2 border-black rounded-lg h-32"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Describe your gig in detail"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Short Description
-              </label>
-              <textarea
-                required
-                className="w-full p-2 border-2 border-black rounded-lg h-24"
-                value={formData.shortDesc}
-                onChange={(e) =>
-                  setFormData({ ...formData, shortDesc: e.target.value })
-                }
-                placeholder="Brief description for the gig card"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Category</label>
-              <select
-                required
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Price ($)
-              </label>
-              <input
-                type="number"
-                required
-                min="1"
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                placeholder="Enter price"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Cover Image
-              </label>
-              <div className="flex gap-4 items-center">
+            {/* Title Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="cover-upload"
+                  type="text"
+                  required
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder="Enter gig title"
                 />
-                <label
-                  htmlFor="cover-upload"
-                  className="flex-1 p-2 border-2 border-black rounded-lg cursor-pointer text-center hover:bg-gray-50"
-                >
-                  {uploading ? "Uploading..." : "Choose Image"}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Short Title
                 </label>
-                {formData.cover && (
-                  <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-black">
-                    <img
-                      src={formData.cover}
-                      alt="Cover Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
+                <input
+                  type="text"
+                  required
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.shortTitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, shortTitle: e.target.value })
+                  }
+                  placeholder="Enter short title"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Delivery Time (days)
-              </label>
-              <input
-                type="number"
-                required
-                min="1"
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.delivery}
-                onChange={(e) =>
-                  setFormData({ ...formData, delivery: e.target.value })
-                }
-                placeholder="Enter delivery time"
-              />
+            {/* Description Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
+                <textarea
+                  required
+                  className="w-full p-2 border-2 border-black rounded-lg h-32"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Describe your gig in detail"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Short Description
+                </label>
+                <textarea
+                  required
+                  className="w-full p-2 border-2 border-black rounded-lg h-32"
+                  value={formData.shortDesc}
+                  onChange={(e) =>
+                    setFormData({ ...formData, shortDesc: e.target.value })
+                  }
+                  placeholder="Brief description for the gig card"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Number of Revisions
-              </label>
-              <input
-                type="number"
-                required
-                min="0"
-                className="w-full p-2 border-2 border-black rounded-lg"
-                value={formData.revisions}
-                onChange={(e) =>
-                  setFormData({ ...formData, revisions: e.target.value })
-                }
-                placeholder="Enter number of revisions"
-              />
+            {/* Images Section */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Cover Image
+                </label>
+                <div className="flex gap-4 items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="cover-upload"
+                  />
+                  <label
+                    htmlFor="cover-upload"
+                    className="flex-1 p-2 border-2 border-black rounded-lg cursor-pointer text-center hover:bg-gray-50"
+                  >
+                    {uploading ? "Uploading..." : "Choose Cover Image"}
+                  </label>
+                  {formData.cover && (
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-black">
+                      <img
+                        src={formData.cover}
+                        alt="Cover Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Additional Images (Max 3)
+                </label>
+                <div className="space-y-2">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-black relative">
+                        <img
+                          src={image}
+                          alt={`Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = formData.images.filter(
+                              (_, i) => i !== index
+                            );
+                            setFormData({
+                              ...formData,
+                              images: newImages,
+                            });
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <span className="text-sm text-gray-600">
+                        Image {index + 1}
+                      </span>
+                    </div>
+                  ))}
+                  {formData.images.length < 3 && (
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImagesUpload}
+                        className="hidden"
+                        id="images-upload"
+                      />
+                      <label
+                        htmlFor="images-upload"
+                        className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-50"
+                      >
+                        {uploadingImages ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-black"></div>
+                        ) : (
+                          <span className="text-2xl text-gray-400">+</span>
+                        )}
+                      </label>
+                      <span className="text-sm text-gray-600">
+                        Add Image ({formData.images.length}/3)
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
+            {/* Category and Price Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Category
+                </label>
+                <select
+                  required
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Price ($)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                  placeholder="Enter price"
+                />
+              </div>
+            </div>
+
+            {/* Delivery and Revisions Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Delivery Time (days)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.delivery}
+                  onChange={(e) =>
+                    setFormData({ ...formData, delivery: e.target.value })
+                  }
+                  placeholder="Enter delivery time"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Number of Revisions
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  className="w-full p-2 border-2 border-black rounded-lg"
+                  value={formData.revisions}
+                  onChange={(e) =>
+                    setFormData({ ...formData, revisions: e.target.value })
+                  }
+                  placeholder="Enter number of revisions"
+                />
+              </div>
+            </div>
+
+            {/* Features Section */}
             <div>
               <label className="block text-sm font-medium mb-1">Features</label>
               {formData.features.map((feature, index) => (
@@ -364,6 +463,18 @@ const AddGigPage = () => {
                 alt="Gig Cover"
                 className="w-full h-48 object-cover rounded-lg"
               />
+            )}
+            {formData.images.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {formData.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Preview ${index + 1}`}
+                    className="w-32 h-32 object-cover rounded-lg"
+                  />
+                ))}
+              </div>
             )}
             <h3 className="text-xl font-semibold">{formData.title}</h3>
             <p className="text-gray-600">{formData.shortDesc}</p>
