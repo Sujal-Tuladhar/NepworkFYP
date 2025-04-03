@@ -33,7 +33,9 @@ export default function ProfilePage() {
     phone: "",
     country: "",
     desc: "",
+    profilePic: null,
   });
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,7 +63,9 @@ export default function ProfilePage() {
           phone: data.phone || "",
           country: data.country || "",
           desc: data.desc || "",
+          profilePic: null,
         });
+        setPreviewImage(data.profilePic || null);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -74,17 +78,39 @@ export default function ProfilePage() {
     }
   }, [isLoggedIn]);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditForm({ ...editForm, profilePic: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("currentUser");
+      const formData = new FormData();
+
+      // Append all form fields
+      Object.keys(editForm).forEach((key) => {
+        if (key === "profilePic" && editForm[key]) {
+          formData.append("profilePic", editForm[key]);
+        } else {
+          formData.append(key, editForm[key]);
+        }
+      });
+
       const response = await fetch("http://localhost:7700/api/user/editUser", {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editForm),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -92,7 +118,10 @@ export default function ProfilePage() {
       }
 
       const updatedUser = await response.json();
+
+      // Update both the user state and preview image
       setUser(updatedUser);
+      setPreviewImage(updatedUser.profilePic);
       setIsEditing(false);
       toast.success("Profile updated successfully");
     } catch (err) {
@@ -251,6 +280,58 @@ export default function ProfilePage() {
                   <DialogTitle>Edit Profile</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="relative">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage
+                          src={
+                            previewImage ||
+                            user?.profilePic ||
+                            "/images/icons/NoAvatar.svg"
+                          }
+                          className="object-cover"
+                        />
+                        <AvatarFallback>
+                          {user?.username?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <label
+                        htmlFor="profilePic"
+                        className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 border-2 border-black cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      </label>
+                      <input
+                        id="profilePic"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Click to change profile picture
+                    </p>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
                     <Input

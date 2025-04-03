@@ -39,7 +39,7 @@ function ContentPart() {
                 className="bg-white p-4 border-t-4 border-l-4 border-r-8 border-b-8 border-black rounded-tr-lg shadow-md flex items-start gap-4"
               >
                 <Image
-                  src="/images/Global/checkbox.svg"
+                  src="/images/icons/checkbox.svg"
                   alt="checkbox"
                   width={28}
                   height={28}

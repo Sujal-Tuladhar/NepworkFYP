@@ -101,16 +101,16 @@ const NavBar = () => {
                 >
                   Profile
                 </Link>
+                <Link
+                  href="/gigs"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  All Gig
+                </Link>
 
                 {user?.isSeller && (
                   <div>
-                    <Link
-                      href="/gigs"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      All Gig
-                    </Link>
                     <Link
                       href="/addGig"
                       className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
