@@ -1,21 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/app/context/AuthContext";
 import Link from "next/link";
+import Review from "@/app/(client)/components/Review/Review";
+import Reviews from "@/app/(client)/components/Reviews/Reviews";
 
-const GigDetails = ({ params }) => {
+const GigDetails = () => {
   const router = useRouter();
+  const { id: gigID } = useParams();
   const { isLoggedIn, user, loading: authLoading } = useAuth();
   const [gig, setGig] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({
-    rating: 5,
-    comment: "",
-  });
-  const [isReviewing, setIsReviewing] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -33,9 +30,6 @@ const GigDetails = ({ params }) => {
   useEffect(() => {
     const fetchGigDetails = async () => {
       try {
-        // Properly handle the params Promise
-        const { id: gigID } = await Promise.resolve(params);
-
         if (!gigID) {
           throw new Error("Missing gig ID");
         }
@@ -46,8 +40,8 @@ const GigDetails = ({ params }) => {
           return;
         }
 
-        // Match the backend route exactly
-        const response = await fetch(
+        // Fetch gig details
+        const gigResponse = await fetch(
           `http://localhost:7700/api/gig/getGig/single/${gigID}`,
           {
             headers: {
@@ -56,65 +50,111 @@ const GigDetails = ({ params }) => {
           }
         );
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            response.status === 404
-              ? errorData.message || "Gig not found"
-              : errorData.message || "Failed to fetch gig details"
-          );
+        if (!gigResponse.ok) {
+          throw new Error("Failed to fetch gig details");
         }
 
-        const data = await response.json();
-        setGig(data);
-        setReviews(data.reviews || []);
+        const gigData = await gigResponse.json();
+        setGig(gigData);
+
+        // Fetch reviews separately
+        const reviewsResponse = await fetch(
+          `http://localhost:7700/api/review/getReviews/${gigID}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!reviewsResponse.ok) {
+          throw new Error("Failed to fetch reviews");
+        }
+
+        const reviewsData = await reviewsResponse.json();
+        setGig((prevGig) => ({
+          ...prevGig,
+          reviews: reviewsData.data || [],
+        }));
       } catch (error) {
         console.error("Error:", error);
         toast.error(error.message);
-        setGig(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchGigDetails();
-  }, [params, router]);
+  }, [gigID, router]);
 
-  const handleReviewSubmit = async (e) => {
-    e.preventDefault();
+  const handleReviewSubmit = async (reviewData) => {
     try {
-      const { id: gigID } = await Promise.resolve(params);
-
       if (!gigID) {
         throw new Error("Missing gig ID");
       }
 
       const token = localStorage.getItem("currentUser");
+      if (!token) {
+        throw new Error("Please login to submit a review");
+      }
+
       const response = await fetch(
-        `http://localhost:7700/api/gig/review/${gigID}`,
+        `http://localhost:7700/api/review/createReview`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(newReview),
+          body: JSON.stringify({
+            gigId: gigID,
+            star: reviewData.star,
+            desc: reviewData.desc,
+          }),
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to submit review");
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(text || "Failed to submit review");
       }
 
-      const data = await response.json();
-      setReviews(data.reviews);
-      setNewReview({ rating: 5, comment: "" });
-      setIsReviewing(false);
-      toast.success("Review submitted successfully!");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to submit review");
+      }
+
+      // Fetch updated reviews after successful submission
+      const reviewsResponse = await fetch(
+        `http://localhost:7700/api/review/getReviews/${gigID}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!reviewsResponse.ok) {
+        throw new Error("Failed to fetch updated reviews");
+      }
+
+      const reviewsData = await reviewsResponse.json();
+
+      // Update the gig state with the new reviews
+      setGig((prevGig) => ({
+        ...prevGig,
+        reviews: reviewsData.data || [],
+        totalStars: (prevGig.totalStars || 0) + reviewData.star,
+        starNumber: (prevGig.starNumber || 0) + 1,
+      }));
+
+      return data;
     } catch (error) {
       console.error("Error:", error);
-      toast.error(error.message);
+      throw error;
     }
   };
 
@@ -151,7 +191,6 @@ const GigDetails = ({ params }) => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { id: gigID } = await Promise.resolve(params);
       const token = localStorage.getItem("currentUser");
       const response = await fetch(
         `http://localhost:7700/api/gig/editGig/${gigID}`,
@@ -181,7 +220,6 @@ const GigDetails = ({ params }) => {
 
   const handleDeleteConfirm = async () => {
     try {
-      const { id: gigID } = await Promise.resolve(params);
       const token = localStorage.getItem("currentUser");
       const response = await fetch(
         `http://localhost:7700/api/gig/deleteGig/${gigID}`,
@@ -416,118 +454,8 @@ const GigDetails = ({ params }) => {
           </div>
         </div>
 
-        {/* Reviews Section */}
-        <div className="mt-8">
-          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Reviews</h2>
-              {isLoggedIn && user && user._id !== gig.userId && (
-                <button
-                  onClick={() => setIsReviewing(true)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  Write a Review
-                </button>
-              )}
-            </div>
-
-            {/* Review Form */}
-            {isReviewing && (
-              <form
-                onSubmit={handleReviewSubmit}
-                className="mb-8 p-4 border-2 border-gray-200 rounded-lg"
-              >
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    Rating
-                  </label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() =>
-                          setNewReview({ ...newReview, rating: star })
-                        }
-                        className={`text-2xl ${
-                          star <= newReview.rating
-                            ? "text-yellow-500"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    Comment
-                  </label>
-                  <textarea
-                    required
-                    className="w-full p-2 border-2 border-black rounded-lg h-32"
-                    value={newReview.comment}
-                    onChange={(e) =>
-                      setNewReview({ ...newReview, comment: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex justify-end gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsReviewing(false)}
-                    className="px-4 py-2 border-2 border-black rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Submit Review
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Reviews List */}
-            <div className="space-y-6">
-              {reviews.map((review, index) => (
-                <div
-                  key={index}
-                  className="p-4 border-2 border-gray-200 rounded-lg"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={`${
-                            i < review.rating
-                              ? "text-yellow-500"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <span className="text-gray-500">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-gray-700">{review.comment}</p>
-                </div>
-              ))}
-              {reviews.length === 0 && (
-                <p className="text-center text-gray-500 py-4">
-                  No reviews yet. Be the first to review this gig!
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Reviews component */}
+        <Reviews gigId={gigID} />
       </div>
 
       {/* Edit Dialog */}

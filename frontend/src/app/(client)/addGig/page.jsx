@@ -429,7 +429,9 @@ const AddGigPage = () => {
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    className="px-3 py-2 bg-white border-2 border-black rounded-r-full rounded-b-full
+             text-black hover:bg-red-400 transition-all
+             shadow-[4px_4px_0_0_rgba(239,68,68)] "
                   >
                     ×
                   </button>
@@ -438,15 +440,15 @@ const AddGigPage = () => {
               <button
                 type="button"
                 onClick={addFeature}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="mt-2 px-4 py-2 bg- border-2 border-black hover:bg-green-300 transition-colors shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]"
               >
-                Add Feature
+                + Add Feature
               </button>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors"
+              className="w-full py-3  border-2 border-black font-semibold hover:bg-blue-300 transition-colors shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
             >
               Create Gig
             </button>
