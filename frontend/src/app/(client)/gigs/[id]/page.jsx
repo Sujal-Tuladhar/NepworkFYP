@@ -250,6 +250,7 @@ const GigDetails = () => {
       </div>
     );
   }
+  const gigAuthor = gig.userId || {};
 
   if (!gig) {
     return (
@@ -287,17 +288,21 @@ const GigDetails = () => {
             <div className="mb-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{gig.title}</h1>
+                  <h1 className="text-3xl font-bold mb-5 underline ">
+                    {gig.title}
+                  </h1>
                   <div className="flex items-center gap-4">
-                    {gig.user?.profilePic && (
+                    {gigAuthor?.profilePic && (
                       <img
-                        src={gig.user.profilePic}
-                        alt={gig.user.username}
-                        className="w-12 h-12 rounded-full object-cover"
+                        src={gigAuthor?.profilePic}
+                        alt={gigAuthor?.username}
+                        className="w-14 h-14 rounded-full object-cover"
                       />
                     )}
                     <div>
-                      <h2 className="font-semibold">{gig.user?.username}</h2>
+                      <h2 className="text-xl font-semibold mb-1">
+                        {gigAuthor?.username}
+                      </h2>
                       <div className="flex items-center gap-2">
                         <span className="text-yellow-500">★</span>
                         <span>
@@ -335,91 +340,156 @@ const GigDetails = () => {
             </div>
 
             {/* Image Gallery */}
-            <div className="relative mb-8">
-              {gig.images && gig.images.length > 0 ? (
-                <>
-                  <img
-                    src={gig.images[currentImageIndex]}
-                    alt={`${gig.title} - Image ${currentImageIndex + 1}`}
-                    className="w-full h-[400px] object-cover rounded-lg"
-                  />
-                  {gig.images.length > 1 && (
-                    <>
-                      <button
-                        onClick={handlePrevImage}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+            <div className="relative mb-8 group">
+              {/* Main image container with subtle border and shadow */}
+              <div className="relative w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                {gig.images && gig.images.length > 0 ? (
+                  <>
+                    {/* Main image with smooth transition */}
+                    <img
+                      src={gig.images[currentImageIndex]}
+                      alt={`${gig.title} - Image ${currentImageIndex + 1}`}
+                      className="w-full h-full object-cover transition-opacity duration-300"
+                    />
+
+                    {/* Navigation buttons (only show on hover when multiple images) */}
+                    {gig.images.length > 1 && (
+                      <>
+                        {/* Previous button with modern chevron */}
+                        <button
+                          onClick={handlePrevImage}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          aria-label="Previous image"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+
+                        {/* Next button with modern chevron */}
+                        <button
+                          onClick={handleNextImage}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          aria-label="Next image"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center">
+                    <div className="text-center p-6">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-gray-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        ‹
-                      </button>
-                      <button
-                        onClick={handleNextImage}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"
-                      >
-                        ›
-                      </button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                        {gig.images.map((_, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentImageIndex(index)}
-                            className={`w-2 h-2 rounded-full transition-colors ${
-                              index === currentImageIndex
-                                ? "bg-white"
-                                : "bg-white/50 hover:bg-white/80"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-400">No images available</span>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="text-gray-400 mt-2 block">
+                        No images available
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modern dot indicators (only for multiple images) */}
+              {gig.images && gig.images.length > 1 && (
+                <div className="flex justify-center mt-4 space-x-2">
+                  {gig.images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`h-2 rounded-full transition-all duration-200 ${
+                        index === currentImageIndex
+                          ? "w-6 bg-black"
+                          : "w-2 bg-gray-300 hover:bg-gray-400"
+                      }`}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
                 </div>
               )}
             </div>
 
             {/* About This Gig */}
-            <div className="bg-white rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4">About This Gig</h2>
+            <div className="bg-white border-2 shadow-[0px_-4px_0px_0px_rgba(150,118,218,1),4px_0px_0px_0px_rgba(150,118,218,1)] border-black rounded-tr-2xl p-6 mb-8">
+              <h2 className="text-xl font-bold mb-8 border-b-2 border-black w-fit">
+                About This Gig
+              </h2>
               <p className="text-gray-700 whitespace-pre-wrap">
                 {gig.description}
               </p>
             </div>
 
             {/* About The Seller */}
-            <div className="bg-white rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4">About The Seller</h2>
-              <div className="flex items-center gap-4 mb-4">
+            <div
+              className="bg-white  border-2 border-black shadow-[-4px_4px_0px_0px_rgba(150,118,218,1)]
+ rounded-bl-2xl p-6 mb-8"
+            >
+              <h2 className="text-xl font-bold mb-8 border-b-2 border-black w-fit">
+                About The Seller
+              </h2>
+              <div className="flex items-center gap-4 mb-6">
                 <img
-                  src={gig.user?.profilePic || "/images/icons/NoAvatar.svg"}
-                  alt={gig.user?.username}
+                  src={gigAuthor?.profilePic || "/images/icons/NoAvatar.svg"}
+                  alt={gigAuthor?.username}
                   className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
-                  <h3 className="font-semibold">{gig.user?.username}</h3>
+                  <h3 className="font-semibold">{gigAuthor?.username}</h3>
                   <button className="text-sm text-gray-600 hover:underline">
                     About Me
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-6 text-sm">
                 <div>
                   <p className="text-gray-600">From</p>
-                  <p className="font-medium">{gig.user?.country || "USA"}</p>
+                  <p className="font-medium">{gigAuthor?.country || "USA"}</p>
                 </div>
                 <div>
                   <p className="text-gray-600">Member Since</p>
-                  <p className="font-medium">Static</p>
+                  <p className="font-medium">
+                    {gigAuthor?.createdAt?.slice(0, 10)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-600">Avg. Response Time</p>
                   <p className="font-medium">Static</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Languages</p>
-                  <p className="font-medium">Static</p>
+                  <p className="text-gray-600">Connect With Me</p>
+                  <p className="font-medium">{gigAuthor?.email}</p>
                 </div>
               </div>
             </div>
@@ -427,10 +497,10 @@ const GigDetails = () => {
 
           {/* Right Column - Package Details */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg p-6 sticky top-6">
-              <h3 className="text-xl font-bold mb-4">Static</h3>
+            <div className="bg-white  p-6 border-2 border-black rounded-tl-2xl rounded-br-2xl sticky top-6 ">
+              <h3 className="text-xl font-bold mb-4">{gig?.shortTitle}</h3>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-2xl font-bold">${gig.price}</span>
+                <span className="text-2xl font-bold">Rs {gig.price}</span>
                 <span className="text-gray-600">
                   {gig.delivery} Days Delivery
                 </span>
@@ -446,7 +516,7 @@ const GigDetails = () => {
               </div>
               <button
                 onClick={() => toast.info("Order functionality coming soon!")}
-                className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+                className="w-full py-3 border-2 rounded-lg shadow-[4px_4px_0px_0px_rgba(150,118,218,1)] border-black font-medium"
               >
                 Continue
               </button>

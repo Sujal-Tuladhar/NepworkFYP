@@ -187,7 +187,7 @@ const GigsPage = () => {
             <h3 className="text-xl font-semibold mb-2">{gig.title}</h3>
             <p className="text-gray-600 mb-4 line-clamp-2">{gig.shortDesc}</p>
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-bold">${gig.price}</span>
+              <span className="text-lg font-bold">Rs {gig.price}</span>
               <div className="flex items-center gap-2">
                 <span className="text-yellow-500">★</span>
                 <span className="text-gray-600">

@@ -236,6 +236,7 @@ const Dashboard = () => {
               <div
                 key={gig._id}
                 className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
+                onClick={() => router.push(`/gigs/${gig._id}`)}
               >
                 {gig.cover && (
                   <img
@@ -249,7 +250,7 @@ const Dashboard = () => {
                   {gig.shortDesc}
                 </p>
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg font-bold">${gig.price}</span>
+                  <span className="text-lg font-bold">Rs {gig.price}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-500">★</span>
                     <span className="text-gray-600">

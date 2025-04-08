@@ -50,7 +50,7 @@ router.delete("/deleteGig/:gigId", validate, async (req, res) => {
 
 router.get("/getGig/single/:gigID", validate, async (req, res, next) => {
   try {
-    const gig = await Gig.findById(req.params.gigID);
+    const gig = await Gig.findById(req.params.gigID).populate("userId");
     if (!gig) {
       return next(createError(404, "Gig not found"));
     }
