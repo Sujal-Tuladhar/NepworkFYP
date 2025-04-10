@@ -120,6 +120,22 @@ const NavBar = () => {
                     </Link>
                   </div>
                 )}
+                <Link
+                  href="/messages"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Messages
+                </Link>
+
+                <Link
+                  href="/orders"
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Orders
+                </Link>
+
                 <button
                   onClick={() => {
                     setShowDropdown(false);

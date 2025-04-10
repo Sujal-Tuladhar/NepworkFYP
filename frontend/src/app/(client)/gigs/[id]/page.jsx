@@ -16,6 +16,8 @@ const GigDetails = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     title: "",
     shortDesc: "",
@@ -240,6 +242,47 @@ const GigDetails = () => {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to delete gig");
+    }
+  };
+
+  const handleOrderConfirm = async () => {
+    try {
+      setOrderLoading(true);
+      const token = localStorage.getItem("currentUser");
+
+      if (!token) {
+        toast.error("Please login to place an order");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:7700/api/order/createOrder",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            gigId: gigID,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create order");
+      }
+
+      toast.success("Order placed successfully!");
+      setShowOrderDialog(false);
+      router.push("/orders");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(error.message || "Failed to place order");
+    } finally {
+      setOrderLoading(false);
     }
   };
 
@@ -514,12 +557,19 @@ const GigDetails = () => {
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => toast.info("Order functionality coming soon!")}
-                className="w-full py-3 border-2 rounded-lg shadow-[4px_4px_0px_0px_rgba(150,118,218,1)] border-black font-medium"
-              >
-                Continue
-              </button>
+
+              {user?.isSeller ? (
+                <div className="text-center py-3 bg-gray-100 rounded-lg border-2 border-black mb-6">
+                  <p className="text-gray-700">Sellers cannot place orders</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowOrderDialog(true)}
+                  className="w-full py-3 border-2 rounded-lg shadow-[4px_4px_0px_0px_rgba(150,118,218,1)] border-black font-medium"
+                >
+                  Continue
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -734,6 +784,35 @@ const GigDetails = () => {
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Confirmation Dialog */}
+      {showOrderDialog && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Confirm Order</h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to place an order for this gig? You will be
+              charged Rs {gig.price}.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowOrderDialog(false)}
+                className="px-4 py-2 border-2 border-black rounded-lg hover:bg-gray-100 transition-colors"
+                disabled={orderLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleOrderConfirm}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                disabled={orderLoading}
+              >
+                {orderLoading ? "Processing..." : "Confirm Order"}
               </button>
             </div>
           </div>

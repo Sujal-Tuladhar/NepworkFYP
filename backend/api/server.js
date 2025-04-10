@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import gigRoutes from "./routes/gig.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import orderRoutes from "./routes/order.route.js";
 
 dotenv.config();
 const app = express();
@@ -53,6 +54,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/gig", gigRoutes);
 
 app.use("/api/review", reviewRoutes);
+
+app.use("/api/order", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Nepwork API Is running");

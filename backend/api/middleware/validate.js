@@ -19,6 +19,7 @@ const validate = async (req, res, next) => {
     }
 
     req.user = userData;
+    req.isSeller = userData.isSeller;
     next();
   });
 };
