@@ -20,12 +20,14 @@ router.post("/createOrder", validate, async (req, res, next) => {
       buyerId: req.user._id,
       sellerId: gig.userId,
       escrowId: null,
-      price: gig.price,
+      price: req.body.price, // Use the price from request body
       workStatus: false,
-      isPaid: false,
+      paymentMethod: req.body.paymentMethod || "khalti", // Add payment method
+      isPaid: req.body.isPaid || "pending", // Should be string
     });
 
     await newOrder.save();
+
     res.status(200).json({
       success: true,
       message: "Order created successfully",
@@ -33,10 +35,12 @@ router.post("/createOrder", validate, async (req, res, next) => {
     });
   } catch (err) {
     console.error("Order creation error:", err);
-    next(err);
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to create order",
+    });
   }
 });
-
 router.get("/getOrder", validate, async (req, res, next) => {
   try {
     let query = {};

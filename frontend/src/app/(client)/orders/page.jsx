@@ -14,6 +14,7 @@ const OrdersPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     // Only redirect if auth is loaded and user is not logged in
@@ -140,9 +141,61 @@ const OrdersPage = () => {
     }
   };
 
-  const handlePayClick = (order) => {
-    // For now, just show a success message
-    toast.success("Payment successful!");
+  const handlePayClick = async (order) => {
+    try {
+      setPaymentLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) {
+        toast.error("Please login to make payment");
+        return;
+      }
+
+      // Initialize Khalti payment
+      const response = await fetch(
+        "http://localhost:7700/api/payment/initialize-khalti",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: order._id,
+            website_url: "http://localhost:3000",
+          }),
+        }
+      );
+      console.log(response);
+      console.log("orderId", order._id);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to initialize payment");
+      }
+
+      // If payment initialization is successful, redirect to Khalti payment page
+      if (data.success && data.paymentInitiate?.payment_url) {
+        // Store payment details in localStorage for later use
+        localStorage.setItem(
+          "currentPayment",
+          JSON.stringify({
+            paymentId: data.payment._id,
+            orderId: order._id,
+          })
+        );
+
+        // Redirect to Khalti payment page
+        window.location.href = data.paymentInitiate.payment_url;
+      } else {
+        throw new Error("Invalid payment response");
+      }
+    } catch (error) {
+      console.error("Error initializing payment:", error);
+      toast.error(error.message || "Failed to initialize payment");
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   // Show loading state while auth is loading
@@ -221,6 +274,12 @@ const OrdersPage = () => {
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Work Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Payment Status
                   </th>
                   {!user?.isSeller && (
                     <th
@@ -310,19 +369,41 @@ const OrdersPage = () => {
                         </span>
                       )}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          order.isPaid === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : order.isPaid === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {order.isPaid === "completed"
+                          ? "Paid"
+                          : order.isPaid === "pending"
+                          ? "Pending"
+                          : "Unpaid"}
+                      </span>
+                    </td>
                     {!user?.isSeller && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        {order.workStatus && !order.isPaid && (
+                        {order.isPaid !== "completed" && (
                           <button
                             onClick={() => handlePayClick(order)}
-                            className="text-green-600 hover:text-green-900"
+                            disabled={paymentLoading}
+                            className={`px-3 py-1 rounded-md ${
+                              paymentLoading
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600 text-white"
+                            }`}
                           >
-                            Pay
+                            {paymentLoading ? "Processing..." : "Pay"}
                           </button>
                         )}
                         <button
                           onClick={() => handleDeleteClick(order)}
-                          className="text-red-600 hover:text-red-900"
+                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                         >
                           Delete
                         </button>

@@ -245,11 +245,10 @@ const GigDetails = () => {
     }
   };
 
-  const handleOrderConfirm = async () => {
+  const handleOrder = async () => {
+    setOrderLoading(true);
     try {
-      setOrderLoading(true);
       const token = localStorage.getItem("currentUser");
-
       if (!token) {
         toast.error("Please login to place an order");
         return;
@@ -264,23 +263,36 @@ const GigDetails = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            gigId: gigID,
+            gigId: gig._id,
+            price: gig.price,
+            paymentMethod: "khalti",
+            isPaid: "pending",
           }),
         }
       );
 
-      const data = await response.json();
-
+      // First check if the response is OK
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create order");
+        const errorText = await response.text();
+        try {
+          // Try to parse it as JSON if possible
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || "Failed to create order");
+        } catch {
+          // If not JSON, use the text directly
+          throw new Error(errorText || "Failed to create order");
+        }
       }
 
-      toast.success("Order placed successfully!");
+      // If response is OK, parse as JSON
+      const data = await response.json();
+
+      toast.success("Order created successfully!");
       setShowOrderDialog(false);
       router.push("/orders");
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.message || "Failed to place order");
+      console.error("Error creating order:", error);
+      toast.error(error.message || "Failed to create order");
     } finally {
       setOrderLoading(false);
     }
@@ -808,7 +820,7 @@ const GigDetails = () => {
                 Cancel
               </button>
               <button
-                onClick={handleOrderConfirm}
+                onClick={handleOrder}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 disabled={orderLoading}
               >

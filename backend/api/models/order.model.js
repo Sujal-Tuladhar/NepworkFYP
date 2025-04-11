@@ -8,12 +8,12 @@ const orderSchema = new Schema(
     escrowId: { type: Schema.Types.ObjectId, ref: "Escrow", required: false },
     price: { type: Number, required: true },
     workStatus: { type: Boolean, default: false },
+    paymentMethod: { type: String, enum: ["khalti"], required: true },
     isPaid: {
       type: String,
       enum: ["pending", "completed", "refunded"],
       default: "pending",
     },
-    paymentMethod: { type: String, enum: ["esewa"], required: true },
   },
   { timestamps: true }
 );
