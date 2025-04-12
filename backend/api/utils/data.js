@@ -1,4 +1,4 @@
-const chats = [
+const chat = [
   {
     isGroupChat: false,
     users: [
@@ -107,4 +107,4 @@ const chats = [
   },
 ];
 
-export default chats;
+export default chat;
