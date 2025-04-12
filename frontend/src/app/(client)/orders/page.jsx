@@ -4,6 +4,13 @@ import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import StripePaymentForm from "@/components/StripePaymentForm";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
 const OrdersPage = () => {
   const { isLoggedIn, user, loading: authLoading } = useAuth();
@@ -15,6 +22,7 @@ const OrdersPage = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   useEffect(() => {
     // Only redirect if auth is loaded and user is not logged in
@@ -141,61 +149,14 @@ const OrdersPage = () => {
     }
   };
 
-  const handlePayClick = async (order) => {
-    try {
-      setPaymentLoading(true);
-      const token = localStorage.getItem("currentUser");
-      if (!token) {
-        toast.error("Please login to make payment");
-        return;
-      }
+  const handleStripePayment = (order) => {
+    setSelectedOrder(order);
+    setShowPaymentDialog(true);
+  };
 
-      // Initialize Khalti payment
-      const response = await fetch(
-        "http://localhost:7700/api/payment/initialize-khalti",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orderId: order._id,
-            website_url: "http://localhost:3000",
-          }),
-        }
-      );
-      console.log(response);
-      console.log("orderId", order._id);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to initialize payment");
-      }
-
-      // If payment initialization is successful, redirect to Khalti payment page
-      if (data.success && data.paymentInitiate?.payment_url) {
-        // Store payment details in localStorage for later use
-        localStorage.setItem(
-          "currentPayment",
-          JSON.stringify({
-            paymentId: data.payment._id,
-            orderId: order._id,
-          })
-        );
-
-        // Redirect to Khalti payment page
-        window.location.href = data.paymentInitiate.payment_url;
-      } else {
-        throw new Error("Invalid payment response");
-      }
-    } catch (error) {
-      console.error("Error initializing payment:", error);
-      toast.error(error.message || "Failed to initialize payment");
-    } finally {
-      setPaymentLoading(false);
-    }
+  const handlePaymentSuccess = (paymentId) => {
+    setShowPaymentDialog(false);
+    router.push(`/payment-success?payment_id=${paymentId}`);
   };
 
   // Show loading state while auth is loading
@@ -390,15 +351,17 @@ const OrdersPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         {order.isPaid !== "completed" && (
                           <button
-                            onClick={() => handlePayClick(order)}
+                            onClick={() => handleStripePayment(order)}
                             disabled={paymentLoading}
-                            className={`px-3 py-1 rounded-md ${
+                            className={`px-4 py-2 rounded ${
                               paymentLoading
                                 ? "bg-gray-300 cursor-not-allowed"
-                                : "bg-green-500 hover:bg-green-600 text-white"
-                            }`}
+                                : "bg-green-500 hover:bg-green-600"
+                            } text-white`}
                           >
-                            {paymentLoading ? "Processing..." : "Pay"}
+                            {paymentLoading
+                              ? "Processing..."
+                              : "Pay with Stripe"}
                           </button>
                         )}
                         <button
@@ -445,6 +408,20 @@ const OrdersPage = () => {
                 {deleteLoading ? "Deleting..." : "Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showPaymentDialog && selectedOrder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Complete Payment</h2>
+            <Elements stripe={stripePromise}>
+              <StripePaymentForm
+                order={selectedOrder}
+                onSuccess={handlePaymentSuccess}
+              />
+            </Elements>
           </div>
         </div>
       )}

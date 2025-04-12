@@ -5,9 +5,16 @@ import {
   initializeKhaltiPayment,
   verifyKhaltiPayment,
 } from "../utils/khalti.js";
+import {
+  createStripePaymentIntent,
+  handleStripeWebhook,
+} from "../utils/stripe.js";
 import Order from "../models/order.model.js";
 import Payment from "../models/payment.model.js";
 import Gig from "../models/gig.model.js";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Initialize Khalti payment
 router.post("/initialize-khalti", validate, async (req, res) => {
@@ -145,6 +152,311 @@ router.get("/complete-khalti-payment", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "An error occurred",
+      error: error.message,
+    });
+  }
+});
+
+// Initialize Stripe payment
+router.post("/initialize-stripe", validate, async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Order ID is required",
+      });
+    }
+
+    // Find the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Verify that the user is the buyer of the order
+    if (order.buyerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to pay for this order",
+      });
+    }
+
+    // Find the gig
+    const gig = await Gig.findById(order.gigId);
+    if (!gig) {
+      return res.status(404).json({
+        success: false,
+        message: "Gig not found",
+      });
+    }
+
+    // Create a payment record
+    const payment = await Payment.create({
+      orderId: order._id,
+      gigId: order.gigId,
+      buyerId: order.buyerId,
+      sellerId: order.sellerId,
+      amount: order.price,
+      paymentGateway: "stripe",
+      status: "pending",
+    });
+
+    try {
+      // Create Stripe payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(order.price * 100), // Convert to cents
+        currency: "usd",
+        metadata: {
+          paymentId: payment._id.toString(),
+          orderId: order._id.toString(),
+        },
+      });
+
+      // Update payment with payment intent ID
+      await Payment.findByIdAndUpdate(payment._id, {
+        transactionId: paymentIntent.id,
+      });
+
+      res.json({
+        success: true,
+        clientSecret: paymentIntent.client_secret,
+        payment,
+      });
+    } catch (stripeError) {
+      console.error("Stripe error:", stripeError);
+      // Update payment status to failed
+      await Payment.findByIdAndUpdate(payment._id, {
+        status: "failed",
+      });
+
+      throw stripeError;
+    }
+  } catch (error) {
+    console.error("Error initializing Stripe payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to initialize payment",
+      error: error.message,
+    });
+  }
+});
+
+// Verify Stripe payment
+router.post("/verify-stripe", validate, async (req, res) => {
+  try {
+    const { paymentIntentId } = req.body;
+
+    if (!paymentIntentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment intent ID is required",
+      });
+    }
+
+    // Retrieve the payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Find the payment record by transactionId
+    const payment = await Payment.findOne({ transactionId: paymentIntentId });
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment record not found",
+      });
+    }
+
+    // Handle different payment intent statuses
+    switch (paymentIntent.status) {
+      case "succeeded":
+        // Update payment status
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: "success",
+          paymentConfirmation: true,
+        });
+
+        // Update order status
+        await Order.findByIdAndUpdate(payment.orderId, {
+          isPaid: "completed",
+        });
+
+        return res.json({
+          success: true,
+          status: "succeeded",
+          payment: {
+            ...payment.toObject(),
+            status: "success",
+            paymentConfirmation: true,
+          },
+        });
+
+      case "processing":
+        return res.json({
+          success: true,
+          status: "pending",
+          payment,
+          message: "Payment is still processing",
+        });
+
+      case "requires_payment_method":
+      case "canceled":
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: "failed",
+        });
+
+        return res.json({
+          success: true,
+          status: "failed",
+          payment: {
+            ...payment.toObject(),
+            status: "failed",
+          },
+          message: "Payment failed or was canceled",
+        });
+
+      default:
+        return res.json({
+          success: true,
+          status: "pending",
+          payment,
+          message: "Payment status unknown",
+        });
+    }
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify payment",
+      error: error.message,
+    });
+  }
+});
+
+// Verify payment status
+router.get("/verify/:paymentId", validate, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment ID is required",
+      });
+    }
+
+    // Find the payment record
+    const payment = await Payment.findById(paymentId);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+
+    // If payment is already confirmed, return success
+    if (payment.status === "success" && payment.paymentConfirmation) {
+      return res.json({
+        success: true,
+        status: "succeeded",
+        payment,
+      });
+    }
+
+    // For Stripe payments, verify with Stripe
+    if (payment.paymentGateway === "stripe") {
+      try {
+        // Get the payment intent ID from the payment record
+        const paymentIntentId = payment.transactionId;
+        if (!paymentIntentId) {
+          return res.json({
+            success: true,
+            status: "pending",
+            payment,
+            message: "Payment intent not found, waiting for webhook",
+          });
+        }
+
+        // Retrieve the payment intent from Stripe
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          paymentIntentId
+        );
+
+        // Handle different payment intent statuses
+        switch (paymentIntent.status) {
+          case "succeeded":
+            // Update payment status
+            await Payment.findByIdAndUpdate(paymentId, {
+              status: "success",
+              paymentConfirmation: true,
+            });
+
+            // Update order status
+            await Order.findByIdAndUpdate(payment.orderId, {
+              isPaid: "completed",
+            });
+
+            return res.json({
+              success: true,
+              status: "succeeded",
+              payment: {
+                ...payment.toObject(),
+                status: "success",
+                paymentConfirmation: true,
+              },
+            });
+
+          case "processing":
+            return res.json({
+              success: true,
+              status: "pending",
+              payment,
+              message: "Payment is still processing",
+            });
+
+          case "requires_payment_method":
+          case "canceled":
+            return res.json({
+              success: true,
+              status: "failed",
+              payment,
+              message: "Payment failed or was canceled",
+            });
+
+          default:
+            return res.json({
+              success: true,
+              status: "pending",
+              payment,
+              message: "Payment status unknown",
+            });
+        }
+      } catch (stripeError) {
+        console.error("Stripe verification error:", stripeError);
+        // If there's a Stripe error, return the current payment status
+        return res.json({
+          success: true,
+          status: payment.status,
+          payment,
+          message: "Error verifying with Stripe, using current status",
+        });
+      }
+    }
+
+    // For other payment gateways, return current status
+    return res.json({
+      success: true,
+      status: payment.status,
+      payment,
+    });
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify payment",
       error: error.message,
     });
   }
