@@ -5,6 +5,7 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import dotenv from "dotenv";
+import asyncHandler from "express-async-handler";
 
 // Load environment variables
 dotenv.config();
@@ -107,4 +108,24 @@ router.delete("/deleteUser", validate, async (req, res) => {
   }
 });
 
+router.get(
+  "/searchUsers",
+  validate,
+  asyncHandler(async (req, res) => {
+    const keyword = req.query.search
+      ? {
+          $or: [
+            { username: { $regex: req.query.search, $options: "i" } },
+            { email: { $regex: req.query.search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const users = await User.find({
+      ...keyword,
+      _id: { $ne: req.user._id },
+    }).select("-password");
+    res.status(200).json(users);
+  })
+);
 export default router;

@@ -10,6 +10,8 @@ import gigRoutes from "./routes/gig.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import orderRoutes from "./routes/order.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import chats from "./utils/data.js";
+import chatRoutes from "./routes/chat.route.js";
 
 dotenv.config();
 const app = express();
@@ -60,7 +62,19 @@ app.use("/api/order", orderRoutes);
 
 app.use("/api/payment", paymentRoutes);
 
-app.get("/", (req, res) => {
+app.use("/api/chat", chatRoutes);
+
+// app.get("/api/chat", (req, res) => {
+//   res.send(chats);
+// });
+
+// app.get("/api/chat/:id", (req, res) => {
+//   const singleChat = chats.find((c) => c._id === req.params.id);
+
+//   res.send(singleChat);
+// });
+
+app.use("/", (req, res) => {
   res.send("Nepwork API Is running");
 });
 

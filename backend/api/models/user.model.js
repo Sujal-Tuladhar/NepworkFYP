@@ -20,6 +20,8 @@ const userSchema = new Schema(
     profilePic: {
       type: String,
       required: false,
+      default:
+        "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
     },
     country: {
       type: String,
