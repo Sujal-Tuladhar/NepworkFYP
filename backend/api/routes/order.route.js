@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import Order from "../models/order.model.js";
 import { validate } from "../middleware/validate.js";
 import Gig from "../models/gig.model.js";
+import Payment from "../models/payment.model.js";
 
 const router = express.Router();
 
@@ -102,12 +103,15 @@ router.delete("/deleteOrder/:orderId", validate, async (req, res, next) => {
       });
     }
 
+    // Delete associated payments first
+    await Payment.deleteMany({ orderId: orderId });
+
     // Delete the order
     await Order.findByIdAndDelete(orderId);
 
     res.status(200).json({
       success: true,
-      message: "Order deleted successfully",
+      message: "Order and associated payments deleted successfully",
     });
   } catch (err) {
     next(err);
