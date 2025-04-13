@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import Image from "next/image";
 
 const NavBar = () => {
   const { isLoggedIn, logout } = useAuth();
@@ -70,83 +71,108 @@ const NavBar = () => {
             </Link>
           </>
         ) : (
-          <div className="relative mr-14" ref={dropdownRef}>
-            <div
-              className="flex items-center gap-4 cursor-pointer"
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-black">
-                <img
-                  src={user?.profilePic || "/images/icons/NoAvatar.svg"}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+          <div className="flex items-center gap-6">
+            <Link href="/message">
+              <Image
+                src="/images/Navbar/Chat.svg"
+                width={24}
+                height={24}
+                alt="chat"
+              />
+            </Link>
+            <Link href="/orders">
+              <Image
+                src="/images/Navbar/Cart.svg"
+                width={24}
+                height={24}
+                alt="cart"
+              />
+            </Link>
+
+            <Image
+              src="/images/Navbar/Notification.svg"
+              width={24}
+              height={24}
+              alt="notification"
+            />
+            <div className="relative mr-14" ref={dropdownRef}>
+              <div
+                className="flex items-center gap-4 cursor-pointer"
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-black">
+                  <img
+                    src={user?.profilePic || "/images/icons/NoAvatar.svg"}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <span className="font-semibold text-lg">{user?.username}</span>
               </div>
-              <span className="font-semibold text-lg">{user?.username}</span>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] py-1 z-50 overflow-hidden">
+                  <Link
+                    href="/dashboard"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/gigs"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    All Gig
+                  </Link>
+
+                  {user?.isSeller && (
+                    <div>
+                      <Link
+                        href="/addGig"
+                        className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Create Gig
+                      </Link>
+                    </div>
+                  )}
+                  <Link
+                    href="/message"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Messages
+                  </Link>
+
+                  <Link
+                    href="/orders"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Orders
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      logout();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 rounded-br-3xl"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] py-1 z-50 overflow-hidden">
-                <Link
-                  href="/dashboard"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/profile"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  Profile
-                </Link>
-                <Link
-                  href="/gigs"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  All Gig
-                </Link>
-
-                {user?.isSeller && (
-                  <div>
-                    <Link
-                      href="/addGig"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Create Gig
-                    </Link>
-                  </div>
-                )}
-                <Link
-                  href="/messages"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  Messages
-                </Link>
-
-                <Link
-                  href="/orders"
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  Orders
-                </Link>
-
-                <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    logout();
-                  }}
-                  className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 rounded-br-3xl"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
