@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 
 function Page() {
   const { isLoggedIn, loading } = useAuth();
+  const [fetchAgain, setFetchAgain] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,8 +31,8 @@ function Page() {
         <div>
           <SideDrawer />
           <div className="flex justify-between w-[100%] h-[91vh] p-2.5">
-            <LeftSide />
-            <RightSide />
+            <LeftSide fetchAgain={fetchAgain} />
+            <RightSide fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
           </div>
         </div>
       )}

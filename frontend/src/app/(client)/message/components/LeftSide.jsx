@@ -7,7 +7,7 @@ import ChatLoading from "./component/ChatLoading";
 import { getSender } from "../config/ChatLogics.js";
 import GroupChatModal from "./component/GroupChatModal.jsx";
 
-function LeftSide() {
+function LeftSide({ fetchAgain }) {
   const [loggedUser, setLoggedUser] = useState();
   const { selectedChat, setSelectedChat, user, chats, setChats } = useChat();
 
@@ -24,7 +24,6 @@ function LeftSide() {
           },
         }
       );
-      
 
       setChats(data);
 
@@ -38,7 +37,7 @@ function LeftSide() {
   useEffect(() => {
     setLoggedUser(localStorage.getItem("currentUser"));
     fetchChats();
-  }, []);
+  }, [fetchAgain]);
 
   return (
     <div
