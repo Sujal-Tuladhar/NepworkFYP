@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import NavBar from "./components/NavBar";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatProvider } from "./context/ChatContext";
 
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
@@ -58,8 +59,10 @@ export default function RootLayout({ children }) {
 
       <body className={`${notoSans.variable} antialiased`}>
         <AuthProvider>
-          <NavBar />
-          {children}
+          <ChatProvider>
+            <NavBar />
+            {children}
+          </ChatProvider>
         </AuthProvider>
       </body>
     </html>

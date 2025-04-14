@@ -3,7 +3,7 @@ import { validate } from "../middleware/validate.js";
 import Chat from "../models/chat.model.js";
 import User from "../models/user.model.js";
 import asyncHandler from "express-async-handler";
-
+import mongoose from "mongoose";
 const router = express.Router();
 
 router.route("/accessChat").post(
@@ -16,41 +16,43 @@ router.route("/accessChat").post(
         .status(400)
         .json({ message: "User ID param not sent with request." });
     }
-    var isChat = await Chat.find({
-      isGroupChat: false,
-      $or: [
-        { users: { $elemMatch: { $eq: req.user._id } } },
-        { users: { $elemMatch: { $eq: userId } } },
-      ],
-    })
-      .populate("users", "-password")
-      .populate("latestMessage");
-    isChat = await User.populate(isChat, {
-      path: "latestMessage.sender",
-      select: "name profilePic email",
-    });
-    if (isChat.length > 0) {
-      res.send(isChat[0]);
-    } else {
-      var chatData = {
+
+    try {
+      let isChat = await Chat.findOne({
+        isGroupChat: false,
+        users: { $all: [req.user._id, userId] },
+      })
+        .populate("users", "-password")
+        .populate("latestMessage");
+
+      if (isChat) {
+        isChat = await User.populate(isChat, {
+          path: "latestMessage.sender",
+          select: "name profilePic email",
+        });
+        return res.send(isChat);
+      }
+
+      const chatData = {
         chatName: "sender",
         isGroupChat: false,
         users: [req.user._id, userId],
       };
-      try {
-        const createdChat = await Chat.create(chatData);
-        const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-          "users",
-          "-password"
-        );
-        res.status(200).json(FullChat);
-      } catch (error) {
-        res.status(400);
-        throw new Error(error.message);
-      }
+
+      const createdChat = await Chat.create(chatData);
+      const fullChat = await Chat.findOne({ _id: createdChat._id }).populate(
+        "users",
+        "-password"
+      );
+
+      return res.status(200).json(fullChat);
+    } catch (error) {
+      console.error("AccessChat error:", error);
+      return res.status(500).json({ message: "Failed to access chat." });
     }
   })
 );
+
 router.get(
   "/fetchChat",
   validate,

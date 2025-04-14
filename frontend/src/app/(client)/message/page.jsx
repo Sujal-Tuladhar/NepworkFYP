@@ -1,38 +1,41 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import LeftSide from "./components/LeftSide";
 import RightSide from "./components/RightSide";
-import newRequest from "@/app/utils/newRequest.js";
+import SideDrawer from "./components/SideDrawer";
+import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 function Page() {
-  const [chats, setChats] = useState([]);
-
-  const fetchChat = async () => {
-    try {
-      const res = await axios.get("http://localhost:7700/api/chat");
-      const data = res.data;
-      setChats(data);
-    } catch (error) {
-      console.error("Error fetching chat data:", error);
-    }
-  };
+  const { isLoggedIn, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    fetchChat();
-  }, []);
+    if (!loading && !isLoggedIn) {
+      router.push("/login");
+    }
+  }, [isLoggedIn, loading, router]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isLoggedIn) {
+    return null;
+  }
 
   return (
-    <div>
-      Chat Page
-      {chats.map((chat) => (
-        <div key={chat._id}>
-          <h1>{chat.chatName}</h1>
+    <>
+      {isLoggedIn && (
+        <div>
+          <SideDrawer />
+          <div className="flex justify-between w-[100%] h-[91vh] p-2.5">
+            <LeftSide />
+            <RightSide />
+          </div>
         </div>
-      ))}
-      <LeftSide />
-      <RightSide />
-    </div>
+      )}
+    </>
   );
 }
 
