@@ -34,10 +34,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 {!selectedChat.isGroupChat ? (
                   getSender(user, selectedChat?.users)
                 ) : (
-                  <>{selectedChat.chatName.toUpperCase()}
-                  <UpdateGroupChatModal fetchAgain={fetchAgain} setFetchAgain={setFetchAgain}/></>
+                  <>{selectedChat.chatName.toUpperCase()}</>
                 )}
               </h2>
+
+              {/* Group chat modal trigger */}
+              {selectedChat.isGroupChat && (
+                <div className="ml-2">
+                  <UpdateGroupChatModal
+                    fetchAgain={fetchAgain}
+                    setFetchAgain={setFetchAgain}
+                  />
+                </div>
+              )}
 
               {/* Empty spacer for alignment */}
               <div className="md:hidden w-9"></div>

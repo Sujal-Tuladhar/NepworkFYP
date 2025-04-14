@@ -13,7 +13,7 @@ const UserListItem = ({ user, handleFunction }) => {
             user.profilePic ||
             "https://res.cloudinary.com/dx6rq6eiw/image/upload/v1743739212/awkzeed1w7yq31wmjtgs.jpg"
           }
-          alt={user.username}
+          alt="username"
           fill
           sizes="(max-width: 40px) 40px, 40px"
           className="object-cover"

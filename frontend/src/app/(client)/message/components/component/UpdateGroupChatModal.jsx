@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,24 +9,55 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Toaster, toast } from "sonner";
-import { useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import { useChat } from "@/app/context/ChatContext";
+import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeItem from "../userInfo/UserBadgeItem.jsx";
-import {} from "../../config/ChatLogics.js";
-import { set } from "react-hook-form";
+import { Spinner } from "@/components/ui/Spinner";
+import UserListItem from "../userInfo/UserListItem";
 
 const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
   const [open, setOpen] = useState(false);
-  const { selectedChat, setSelectedChat, user } = useChat();
+  const { selectedChat, setSelectedChat } = useChat();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [groupChatName, setGroupChatName] = useState();
+  const [groupChatName, setGroupChatName] = useState("");
   const [search, setSearch] = useState("");
-  const [searchedResult, setSearchedResult] = useState([]);
+  const [searchResult, setSearchResult] = useState([]);
   const [renameLoading, setRenameLoading] = useState(false);
 
-  const handleRemove = (userToRemove) => {};
+  const handleRemove = async (user1) => {
+    if (selectedChat.groupAdmin._id !== user._id && user1._id !== user._id) {
+      toast.error("Only admins can remove users");
+      return;
+    }
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) return;
+      const { data } = await axios.put(
+        `http://localhost:7700/api/chat/remove-group`,
+        {
+          chatId: selectedChat._id,
+          userId: user1._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      user1._id === user._id ? setSelectedChat("") : setSelectedChat(data);
+      setFetchAgain(!fetchAgain);
+      setLoading(false);
+      toast.success("User removed successfully");
+    } catch (error) {
+      setLoading(false);
+      toast.error("Error removing user");
+    }
+  };
 
   const handleRename = async () => {
     if (!groupChatName) return;
@@ -50,7 +81,6 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
         }
       );
       setSelectedChat(data);
-      console.log(data);
       setFetchAgain(!fetchAgain);
       setRenameLoading(false);
       toast.success("Group Renamed Successfully");
@@ -60,7 +90,70 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
-  const handleSearch = async (query) => {};
+  const handleSearch = async (query) => {
+    setSearch(query);
+    if (!query) {
+      setSearchResult([]);
+      return;
+    }
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) return;
+      const { data } = await axios.get(
+        `http://localhost:7700/api/user/searchUsers?search=${query}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setSearchResult(data);
+    } catch (error) {
+      toast.error("Error fetching search results");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddUser = async (user1) => {
+    if (selectedChat.users.find((u) => u._id === user1._id)) {
+      toast.error("User already in the group");
+      return;
+    }
+
+    if (selectedChat.groupAdmin._id !== user._id) {
+      toast.error("Only admins can add users");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) return;
+
+      const { data } = await axios.put(
+        `http://localhost:7700/api/chat/group-add`,
+        {
+          chatId: selectedChat._id,
+          userId: user1._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setSelectedChat(data);
+      setFetchAgain(!fetchAgain);
+      setLoading(false);
+      toast.success("User added successfully");
+    } catch (error) {
+      setLoading(false);
+      toast.error("Error adding user");
+    }
+  };
 
   return (
     <div>
@@ -68,20 +161,20 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <div className="flex">
+          <button className="flex p-1 hover:bg-gray-100 rounded">
             <Image
               src="/images/icons/View.svg"
               alt="view"
               width={20}
               height={20}
-            />{" "}
-          </div>
+            />
+          </button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{selectedChat?.chatName}</DialogTitle>
           </DialogHeader>
-          <div className="w-[100%] flex flex-wrap pb-3 ">
+          <div className="w-[100%] flex flex-wrap pb-3">
             {selectedChat.users.map((u) => (
               <UserBadgeItem
                 key={u._id}
@@ -100,29 +193,42 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
               onChange={(e) => setGroupChatName(e.target.value)}
             />
             <button
-              className="  border-2 p-2 border-black rounded-tr-2xl hover:bg-blue-300 shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] ml-4"
+              className="border-2 p-2 border-black rounded-tr-2xl hover:bg-blue-300 shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] ml-4"
               onClick={handleRename}
+              disabled={renameLoading}
             >
-              Rename
+              {renameLoading ? <Spinner size="small" /> : "Rename"}
             </button>
           </div>
-          <div className="flex ">
+          <div className="flex">
             <input
-              id="chatname"
+              id="searchuser"
               type="text"
               placeholder="Add Users"
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 mb-1"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 mb-1 w-full"
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
+          {loading ? (
+            <Spinner />
+          ) : (
+            searchResult?.map((user) => (
+              <UserListItem
+                key={user._id}
+                user={user}
+                handleFunction={() => handleAddUser(user)}
+              />
+            ))
+          )}
 
           <DialogFooter>
             <button
               className="border-2 p-2 border-black rounded-tr-2xl hover:bg-red-300 shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)]"
               type="button"
-              onClick={handleRemove(user)}
+              onClick={() => handleRemove(user)}
+              disabled={loading}
             >
-              Leave Group
+              {loading ? <Spinner size="small" /> : "Leave Group"}
             </button>
           </DialogFooter>
         </DialogContent>
