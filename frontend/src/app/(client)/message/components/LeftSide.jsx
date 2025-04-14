@@ -24,6 +24,7 @@ function LeftSide() {
           },
         }
       );
+      
 
       setChats(data);
 
@@ -49,7 +50,7 @@ function LeftSide() {
 
       <div className="flex w-full justify-between items-center px-3 pb-3 text-[28px] md:text-[30px] font-sans font-semibold">
         <span>My Chats</span>
-        <GroupChatModal>
+        <GroupChatModal chats={chats} setChats={setChats}>
           <button className="border-2 border-black px-3 py-1 text-sm hover:bg-gray-100 transition-colors">
             Create Group
           </button>
