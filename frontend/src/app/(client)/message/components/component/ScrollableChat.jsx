@@ -31,7 +31,7 @@ const ScrollableChat = ({ messages }) => {
             <div className={`max-w-[85%] ${isCurrentUser ? "ml-4" : "mr-4"}`}>
               {showSender && !isCurrentUser && (
                 <div className="flex items-center mb-1 gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="w-7 h-7 rounded-full  overflow-hidden">
                     <Image
                       src={m.sender.profilePic || "/default-avatar.png"}
                       alt={m.sender.username}

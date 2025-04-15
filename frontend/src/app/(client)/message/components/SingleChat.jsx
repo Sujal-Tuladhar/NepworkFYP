@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect } from "react";
 import { useChat } from "@/app/context/ChatContext";
 import Image from "next/image";
@@ -9,13 +10,33 @@ import { Toaster, toast } from "sonner";
 import axios from "axios";
 import "./style.css";
 import ScrollableChat from "./component/ScrollableChat.jsx";
+import { io } from "socket.io-client";
+import { useAuth } from "@/app/context/AuthContext";
+
+import TypingAnimation from "./component/TypingAnimation.jsx";
+
+const ENDPOINT = "http://localhost:7700";
+var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { user, selectedChat, setSelectedChat } = useChat();
+  const { selectedChat, setSelectedChat } = useChat();
+  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
+  useEffect(() => {
+    socket = io(ENDPOINT);
+    socket.emit("setup", user);
+    socket.on("connected", () => {
+      setSocketConnected(true);
+    });
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
+  }, []);
   const fetchMessages = async () => {
     if (!selectedChat) return;
     try {
@@ -35,15 +56,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       setMessages(data);
       setLoading(false);
-      console.log("Messages fetched abc:", data);
+      socket.emit("join chat", selectedChat._id);
     } catch (error) {
       toast.error("Error fetching messages", {
         action: { label: "X" },
       });
     }
   };
+
+  useEffect(() => {
+    fetchMessages();
+    selectedChatCompare = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    socket.on("message received", (newMessageReceived) => {
+      if (
+        !selectedChatCompare ||
+        selectedChatCompare._id !== newMessageReceived.chat._id
+      ) {
+        // Show notification or update chat list
+      } else {
+        setMessages([...messages, newMessageReceived]);
+      }
+    });
+  });
+
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
+      socket.emit("stop typing", selectedChat._id);
       try {
         const token = localStorage.getItem("currentUser");
         if (!token) return;
@@ -63,6 +104,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           }
         );
         console.log("Message sent:", data);
+        socket.emit("new message", data);
         setMessages([...messages, data]);
       } catch (error) {
         console.error("Error sending message:", error);
@@ -73,6 +115,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const typingHandler = async (e) => {
     setNewMessage(e.target.value);
     // Typing INdicator Logic
+    if (!socketConnected) return;
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", selectedChat._id);
+    }
+    let lastTypingTime = new Date().getTime();
+    let timerLength = 3000;
+    setTimeout(() => {
+      var timeNow = new Date().getTime();
+      var timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", selectedChat._id);
+        setTyping(false);
+      }
+    }, timerLength);
   };
 
   useEffect(() => {
@@ -128,7 +186,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           </div>
 
           {/* Chat messages container - flex-1 to take remaining space */}
-          <div className="flex-1 bg-gray-100 rounded-lg p-4 overflow-y-auto">
+          <div className="flex-1 rounded-lg p-4 overflow-y-auto">
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <Spinner size="large" />
@@ -144,8 +202,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           </div>
 
           {/* Input field container - fixed at bottom */}
-          <div className="p-4 bg-white border-t">
+          <div className="p-4 bg-white">
             <div onKeyDown={sendMessage}>
+              {isTyping && <TypingAnimation />}
+
               <input
                 type="text"
                 className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-sm"
