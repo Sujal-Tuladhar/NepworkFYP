@@ -17,7 +17,7 @@ import UserBadgeItem from "../userInfo/UserBadgeItem.jsx";
 import { Spinner } from "@/components/ui/Spinner";
 import UserListItem from "../userInfo/UserListItem";
 
-const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
+const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
   const [open, setOpen] = useState(false);
   const { selectedChat, setSelectedChat } = useChat();
   const { user } = useAuth();
@@ -51,6 +51,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain }) => {
       );
       user1._id === user._id ? setSelectedChat("") : setSelectedChat(data);
       setFetchAgain(!fetchAgain);
+      fetchMessages();
       setLoading(false);
       toast.success("User removed successfully");
     } catch (error) {
