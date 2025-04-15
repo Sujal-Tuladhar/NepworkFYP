@@ -12,6 +12,7 @@ import orderRoutes from "./routes/order.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import chats from "./utils/data.js";
 import chatRoutes from "./routes/chat.route.js";
+import messageRoutes from "./routes/message.route.js";
 
 dotenv.config();
 const app = express();
@@ -63,6 +64,8 @@ app.use("/api/order", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 
 app.use("/api/chat", chatRoutes);
+
+app.use("/api/message", messageRoutes);
 
 // app.get("/api/chat", (req, res) => {
 //   res.send(chats);
