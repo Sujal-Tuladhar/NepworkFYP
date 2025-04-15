@@ -30,7 +30,7 @@ function Page() {
       {isLoggedIn && (
         <div>
           <SideDrawer />
-          <div className="flex justify-between w-[100%] h-[91vh] p-2.5">
+          <div className="flex justify-between w-[100%] h-[81vh] p-2.5">
             <LeftSide fetchAgain={fetchAgain} />
             <RightSide fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
           </div>

@@ -6,10 +6,12 @@ import axios from "axios";
 import ChatLoading from "./component/ChatLoading";
 import { getSender } from "../config/ChatLogics.js";
 import GroupChatModal from "./component/GroupChatModal.jsx";
+import { useAuth } from "@/app/context/AuthContext";
 
 function LeftSide({ fetchAgain }) {
-  const [loggedUser, setLoggedUser] = useState();
-  const { selectedChat, setSelectedChat, user, chats, setChats } = useChat();
+  const { user } = useAuth();
+
+  const { selectedChat, setSelectedChat, chats, setChats } = useChat();
 
   const fetchChats = async () => {
     try {
@@ -26,8 +28,6 @@ function LeftSide({ fetchAgain }) {
       );
 
       setChats(data);
-
-      console.log("Fetched chats:", data);
     } catch (error) {
       toast.error("Error fetching chats", {
         action: { label: "X" },
@@ -35,7 +35,6 @@ function LeftSide({ fetchAgain }) {
     }
   };
   useEffect(() => {
-    setLoggedUser(localStorage.getItem("currentUser"));
     fetchChats();
   }, [fetchAgain]);
 
@@ -70,7 +69,7 @@ function LeftSide({ fetchAgain }) {
               >
                 <h1 className="">
                   {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
+                    ? getSender(user, chat.users)
                     : chat.chatName}
                 </h1>
               </div>

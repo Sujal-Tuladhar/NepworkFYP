@@ -1,11 +1,13 @@
-export const getSender = (loggedUser, users) => {
-  return users[0]?._id === loggedUser?._id
-    ? users[0].username
-    : users[1].username;
+export const getSender = (currentUser, users) => {
+  if (!currentUser || !users) return ""; // handle undefined cases
+
+  return users[0]?._id === currentUser._id
+    ? users[1]?.username
+    : users[0]?.username;
 };
 
+export const getSenderFull = (currentUser, users) => {
+  if (!currentUser || !users) return null; // handle undefined cases
 
-export const getSenderFull = (loggedUser, users) => {
-  return users[0]?._id === loggedUser?._id ? users[1] : users[0];
-}
-
+  return users[0]?._id === currentUser._id ? users[1] : users[0];
+};
