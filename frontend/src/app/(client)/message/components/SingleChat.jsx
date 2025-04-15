@@ -19,7 +19,8 @@ const ENDPOINT = "http://localhost:7700";
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
-  const { selectedChat, setSelectedChat } = useChat();
+  const { selectedChat, setSelectedChat, notification, setNotification } =
+    useChat();
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -68,16 +69,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     fetchMessages();
     selectedChatCompare = selectedChat;
   }, [selectedChat]);
-
+  console.log("notification123", notification);
   useEffect(() => {
-    socket.on("message received", (newMessageReceived) => {
+    socket.on("message received", (newMessageRecieved) => {
       if (
         !selectedChatCompare ||
-        selectedChatCompare._id !== newMessageReceived.chat._id
+        selectedChatCompare._id !== newMessageRecieved.chat._id
       ) {
-        // Show notification or update chat list
+        if (!notification.includes(newMessageRecieved)) {
+          setNotification([newMessageRecieved, ...notification]);
+          setFetchAgain(!fetchAgain);
+        }
       } else {
-        setMessages([...messages, newMessageReceived]);
+        setMessages([...messages, newMessageRecieved]);
       }
     });
   });
@@ -88,7 +92,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       try {
         const token = localStorage.getItem("currentUser");
         if (!token) return;
-        console.log(token);
+
         setNewMessage("");
         const { data } = await axios.post(
           "http://localhost:7700/api/message/sendMessage",
@@ -103,7 +107,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             },
           }
         );
-        console.log("Message sent:", data);
+
         socket.emit("new message", data);
         setMessages([...messages, data]);
       } catch (error) {

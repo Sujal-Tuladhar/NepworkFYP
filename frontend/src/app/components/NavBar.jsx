@@ -3,12 +3,26 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import Image from "next/image";
+import { useChat } from "../context/ChatContext";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+} from "@/components/ui/navigation-menu";
+import { getSender } from "../(client)/message/config/ChatLogics.js";
+import NotificationBadge from "./NotificationBadge/NotificationBadge";
 
 const NavBar = () => {
   const { isLoggedIn, logout } = useAuth();
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const { notification, setNotification, setSelectedChat } = useChat();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -88,13 +102,40 @@ const NavBar = () => {
                 alt="cart"
               />
             </Link>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>
+                    <NotificationBadge notification={notification} />
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent className="min-w-[250px] py-2">
+                    {notification?.length === 0 ? (
+                      <NavigationMenuLink className="pl-4 py-2 text-sm text-muted-foreground">
+                        No New Messages
+                      </NavigationMenuLink>
+                    ) : (
+                      notification.map((notif) => (
+                        <NavigationMenuLink
+                          key={notif._id}
+                          className="pl-4 py-2 hover:bg-muted cursor-pointer text-sm"
+                          onClick={() => {
+                            setSelectedChat(notif.chat);
+                            setNotification(
+                              notification.filter((n) => n !== notif)
+                            );
+                          }}
+                        >
+                          {notif.chat.isGroupChat
+                            ? `New Message in ${notif.chat.chatName}`
+                            : `New Message from ${getSender(user, notif.chat.users)}`}
+                        </NavigationMenuLink>
+                      ))
+                    )}
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-            <Image
-              src="/images/Navbar/Notification.svg"
-              width={24}
-              height={24}
-              alt="notification"
-            />
             <div className="relative mr-14" ref={dropdownRef}>
               <div
                 className="flex items-center gap-4 cursor-pointer"
