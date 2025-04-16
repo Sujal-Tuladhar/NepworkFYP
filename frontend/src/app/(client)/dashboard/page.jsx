@@ -414,8 +414,8 @@ const Dashboard = () => {
                   </div>
                   <div className="mt-4 flex justify-end gap-2">
                     <Link
-                      href={`/orders/${order._id}`}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                      href="/orders"
+                      className="px-4 py-2 border-2 border-black rounded-tr-2xl hover:bg-blue-300 shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]"
                     >
                       View Details
                     </Link>

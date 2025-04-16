@@ -45,16 +45,26 @@ router.put("/update-seller-status/:orderId", validate, async (req, res) => {
       orderStatus: sellerWorkStatus ? "inProgress" : "pending",
     });
 
-    // If both seller and buyer have confirmed, update escrow status
+    // Find the existing escrow record
+    const escrow = await Escrow.findOne({ orderId });
+    if (!escrow) {
+      return res.status(400).json({
+        success: false,
+        message: "Escrow record not found for this order",
+      });
+    }
+
+    // Update escrow status based on both parties' confirmation
     if (sellerWorkStatus && order.buyerWorkStatus) {
-      const escrow = await Escrow.findOne({ orderId });
-      if (escrow) {
-        await Escrow.findByIdAndUpdate(escrow._id, {
-          status: "waitingToRelease",
-          sellerConfirmed: true,
-          buyerConfirmed: true,
-        });
-      }
+      await Escrow.findByIdAndUpdate(escrow._id, {
+        status: "waitingToRelease",
+        sellerConfirmed: true,
+        buyerConfirmed: true,
+      });
+    } else if (sellerWorkStatus) {
+      await Escrow.findByIdAndUpdate(escrow._id, {
+        sellerConfirmed: true,
+      });
     }
 
     res.json({
@@ -100,16 +110,26 @@ router.put("/update-buyer-status/:orderId", validate, async (req, res) => {
       orderStatus: buyerWorkStatus ? "inProgress" : "pending",
     });
 
-    // If both seller and buyer have confirmed, update escrow status
+    // Find the existing escrow record
+    const escrow = await Escrow.findOne({ orderId });
+    if (!escrow) {
+      return res.status(400).json({
+        success: false,
+        message: "Escrow record not found for this order",
+      });
+    }
+
+    // Update escrow status based on both parties' confirmation
     if (buyerWorkStatus && order.sellerWorkStatus) {
-      const escrow = await Escrow.findOne({ orderId });
-      if (escrow) {
-        await Escrow.findByIdAndUpdate(escrow._id, {
-          status: "waitingToRelease",
-          sellerConfirmed: true,
-          buyerConfirmed: true,
-        });
-      }
+      await Escrow.findByIdAndUpdate(escrow._id, {
+        status: "waitingToRelease",
+        sellerConfirmed: true,
+        buyerConfirmed: true,
+      });
+    } else if (buyerWorkStatus) {
+      await Escrow.findByIdAndUpdate(escrow._id, {
+        buyerConfirmed: true,
+      });
     }
 
     res.json({

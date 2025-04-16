@@ -3,6 +3,7 @@ import Order from "../models/order.model.js";
 import { validate } from "../middleware/validate.js";
 import Gig from "../models/gig.model.js";
 import Payment from "../models/payment.model.js";
+import Escrow from "../models/escrow.model.js";
 
 const router = express.Router();
 
@@ -42,41 +43,32 @@ router.post("/createOrder", validate, async (req, res, next) => {
     });
   }
 });
-router.get("/getOrder", validate, async (req, res, next) => {
+
+router.get("/getOrder", validate, async (req, res) => {
   try {
-    let query = {};
-
-    // If user is a seller, show orders where they are the seller
-    if (req.isSeller) {
-      query = { sellerId: req.user._id };
-    } else {
-      // If user is a buyer, show orders where they are the buyer
-      query = { buyerId: req.user._id };
-    }
-
-    // Find orders based on the query
-    const orders = await Order.find(query)
-      .populate("gigId", "title shortDesc")
-      .populate("buyerId", "username profilePic")
+    const orders = await Order.find({
+      $or: [{ sellerId: req.user._id }, { buyerId: req.user._id }],
+    })
+      .populate("gigId")
       .populate("sellerId", "username profilePic")
-      .sort({ createdAt: -1 }); // Sort by newest first
+      .populate("buyerId", "username profilePic")
+      .populate({
+        path: "escrowId",
+        select: "status sellerConfirmed buyerConfirmed adminApproved",
+      })
+      .sort({ createdAt: -1 });
 
-    if (!orders || orders.length === 0) {
-      return res.status(200).json({
-        success: true,
-        message: "No orders found",
-        data: [],
-      });
-    }
-
-    res.status(200).json({
+    res.json({
       success: true,
-      message: "Orders retrieved successfully",
       data: orders,
     });
-  } catch (err) {
-    console.error("Error fetching orders:", err);
-    next(err);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message,
+    });
   }
 });
 
@@ -103,6 +95,11 @@ router.delete("/deleteOrder/:orderId", validate, async (req, res, next) => {
       });
     }
 
+    // Delete associated escrow if it exists
+    if (order.escrowId) {
+      await Escrow.findByIdAndDelete(order.escrowId);
+    }
+
     // Delete associated payments first
     await Payment.deleteMany({ orderId: orderId });
 
@@ -111,7 +108,7 @@ router.delete("/deleteOrder/:orderId", validate, async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Order and associated payments deleted successfully",
+      message: "Order and associated records deleted successfully",
     });
   } catch (err) {
     next(err);
