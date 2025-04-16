@@ -5,7 +5,7 @@ import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const StripePaymentForm = ({ order, onSuccess }) => {
+const StripePaymentForm = ({ order, onSuccess, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
@@ -103,17 +103,26 @@ const StripePaymentForm = ({ order, onSuccess }) => {
           }}
         />
       </div>
-      <button
-        type="submit"
-        disabled={!stripe || loading}
-        className={`w-full py-2 px-4 rounded-md text-white ${
-          loading || !stripe
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-green-500 hover:bg-green-600"
-        }`}
-      >
-        {loading ? "Processing..." : "Pay Now"}
-      </button>
+      <div className="flex gap-4">
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className={`flex-1 py-2 px-4 rounded-md text-white ${
+            loading || !stripe
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          }`}
+        >
+          {loading ? "Processing..." : "Pay Now"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2 px-4 rounded-md text-white bg-red-500 hover:bg-red-600"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   );
 };

@@ -89,7 +89,7 @@ router.post("/initialize-khalti", validate, async (req, res) => {
   }
 });
 
-// it is our `return url` where we verify the payment done by user
+// Complete Khalti payment
 router.get("/complete-khalti-payment", async (req, res) => {
   const {
     pidx,
@@ -141,17 +141,89 @@ router.get("/complete-khalti-payment", async (req, res) => {
       isPaid: "completed",
     });
 
-    // Send success response
-    res.json({
-      success: true,
-      message: "Payment Successful",
-      payment,
-    });
+    // Redirect to frontend success page
+    res.redirect(
+      `${process.env.FRONTEND_URL}/payment-success?pidx=${pidx}&transaction_id=${transaction_id}`
+    );
   } catch (error) {
     console.error("Error completing payment:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred",
+      error: error.message,
+    });
+  }
+});
+
+// Verify Khalti payment
+router.post("/verify-khalti", validate, async (req, res) => {
+  try {
+    const { pidx, transactionId } = req.body;
+
+    if (!pidx) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment ID is required",
+      });
+    }
+
+    // Find the payment record
+    const payment = await Payment.findOne({ pidx });
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+
+    // If payment is already confirmed, return success
+    if (payment.status === "success" && payment.paymentConfirmation) {
+      return res.json({
+        success: true,
+        status: "success",
+        payment,
+      });
+    }
+
+    // Verify with Khalti
+    const paymentInfo = await verifyKhaltiPayment(pidx);
+
+    if (paymentInfo?.status === "Completed") {
+      // Update payment record
+      await Payment.findByIdAndUpdate(payment._id, {
+        status: "success",
+        transactionId: transactionId,
+        dataFromVerificationReq: paymentInfo,
+        paymentConfirmation: true,
+      });
+
+      // Update order status
+      await Order.findByIdAndUpdate(payment.orderId, {
+        isPaid: "completed",
+      });
+
+      return res.json({
+        success: true,
+        status: "success",
+        payment: {
+          ...payment.toObject(),
+          status: "success",
+          paymentConfirmation: true,
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: "pending",
+      payment,
+      message: "Payment is still processing",
+    });
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify payment",
       error: error.message,
     });
   }
@@ -381,9 +453,8 @@ router.get("/verify/:paymentId", validate, async (req, res) => {
         }
 
         // Retrieve the payment intent from Stripe
-        const paymentIntent = await stripe.paymentIntents.retrieve(
-          paymentIntentId
-        );
+        const paymentIntent =
+          await stripe.paymentIntents.retrieve(paymentIntentId);
 
         // Handle different payment intent statuses
         switch (paymentIntent.status) {

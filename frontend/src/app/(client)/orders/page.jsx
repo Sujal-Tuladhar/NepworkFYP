@@ -154,9 +154,54 @@ const OrdersPage = () => {
     setShowPaymentDialog(true);
   };
 
+  const handleKhaltiPayment = async (order) => {
+    try {
+      setPaymentLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) {
+        toast.error("Please login to make payment");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payment/initialize-khalti`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: order._id,
+            website_url: window.location.origin,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to initialize payment");
+      }
+
+      // Redirect to Khalti payment page
+      window.location.href = data.paymentInitiate.payment_url;
+    } catch (error) {
+      console.error("Error initializing Khalti payment:", error);
+      toast.error(error.message || "Failed to initialize payment");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   const handlePaymentSuccess = (paymentId) => {
     setShowPaymentDialog(false);
     router.push(`/payment-success?payment_id=${paymentId}`);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentDialog(false);
+    setSelectedOrder(null);
   };
 
   // Show loading state while auth is loading
@@ -336,33 +381,48 @@ const OrdersPage = () => {
                           order.isPaid === "completed"
                             ? "bg-green-100 text-green-800"
                             : order.isPaid === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                         }`}
                       >
                         {order.isPaid === "completed"
                           ? "Paid"
                           : order.isPaid === "pending"
-                          ? "Pending"
-                          : "Unpaid"}
+                            ? "Pending"
+                            : "Unpaid"}
                       </span>
                     </td>
                     {!user?.isSeller && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         {order.isPaid !== "completed" && (
-                          <button
-                            onClick={() => handleStripePayment(order)}
-                            disabled={paymentLoading}
-                            className={`px-4 py-2 rounded ${
-                              paymentLoading
-                                ? "bg-gray-300 cursor-not-allowed"
-                                : "bg-green-500 hover:bg-green-600"
-                            } text-white`}
-                          >
-                            {paymentLoading
-                              ? "Processing..."
-                              : "Pay with Stripe"}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleStripePayment(order)}
+                              disabled={paymentLoading}
+                              className={`px-4 py-2 rounded ${
+                                paymentLoading
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : "bg-green-500 hover:bg-green-600"
+                              } text-white`}
+                            >
+                              {paymentLoading
+                                ? "Processing..."
+                                : "Pay with Stripe"}
+                            </button>
+                            <button
+                              onClick={() => handleKhaltiPayment(order)}
+                              disabled={paymentLoading}
+                              className={`px-4 py-2 rounded ${
+                                paymentLoading
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white`}
+                            >
+                              {paymentLoading
+                                ? "Processing..."
+                                : "Pay with Khalti"}
+                            </button>
+                          </div>
                         )}
                         <button
                           onClick={() => handleDeleteClick(order)}
@@ -420,6 +480,7 @@ const OrdersPage = () => {
               <StripePaymentForm
                 order={selectedOrder}
                 onSuccess={handlePaymentSuccess}
+                onCancel={handlePaymentCancel}
               />
             </Elements>
           </div>

@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function PaymentSuccess() {
   const [isVerifying, setIsVerifying] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [paymentDetails, setPaymentDetails] = useState(null);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -15,8 +17,11 @@ export default function PaymentSuccess() {
     const verifyPayment = async () => {
       try {
         const paymentIntentId = searchParams.get("payment_intent");
-        if (!paymentIntentId) {
-          throw new Error("No payment intent ID found in URL");
+        const pidx = searchParams.get("pidx");
+        const transactionId = searchParams.get("transaction_id");
+
+        if (!paymentIntentId && !pidx) {
+          throw new Error("No payment ID found in URL");
         }
 
         const token = localStorage.getItem("currentUser");
@@ -26,18 +31,34 @@ export default function PaymentSuccess() {
           );
         }
 
-        console.log("Verifying payment with ID:", paymentIntentId);
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-stripe`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ paymentIntentId }),
-          }
-        );
+        let response;
+        if (paymentIntentId) {
+          // Verify Stripe payment
+          response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-stripe`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ paymentIntentId }),
+            }
+          );
+        } else if (pidx) {
+          // Verify Khalti payment
+          response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-khalti`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ pidx, transactionId }),
+            }
+          );
+        }
 
         const data = await response.json();
         console.log("Verification response:", data);
@@ -46,14 +67,23 @@ export default function PaymentSuccess() {
           throw new Error(data.message || "Failed to verify payment");
         }
 
-        if (data.status === "succeeded") {
+        if (data.status === "succeeded" || data.status === "success") {
           setIsSuccess(true);
+          // Set payment details from the response
+          setPaymentDetails({
+            orderId: data.payment.orderId,
+            amount: data.payment.amount,
+            paymentId: data.payment.transactionId || data.payment.pidx,
+            paymentMethod: data.payment.paymentGateway,
+            date: new Date(data.payment.createdAt).toLocaleString(),
+            status: data.payment.status,
+          });
           toast.success("Payment successful! Your order has been confirmed.");
 
-          // Redirect to orders page after 3 seconds
+          // Redirect to orders page after 5 seconds
           setTimeout(() => {
             router.push("/orders");
-          }, 3000);
+          }, 5000);
         } else if (data.status === "pending") {
           toast.info("Payment is still processing. Please wait...");
           // Check again after 5 seconds
@@ -109,10 +139,46 @@ export default function PaymentSuccess() {
             <h2 className="mt-4 text-xl font-semibold text-gray-900">
               Payment Successful!
             </h2>
-            <p className="mt-2 text-gray-600">Your order has been confirmed.</p>
-            <p className="mt-2 text-sm text-gray-500">
-              Redirecting to orders page...
-            </p>
+            {paymentDetails && (
+              <div className="mt-4 text-left space-y-2">
+                <p className="text-gray-600">
+                  <span className="font-medium">Order ID:</span>{" "}
+                  {paymentDetails.orderId}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Amount:</span> Rs{" "}
+                  {paymentDetails.amount}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Payment ID:</span>{" "}
+                  {paymentDetails.paymentId}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Payment Method:</span>{" "}
+                  {paymentDetails.paymentMethod}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Date:</span>{" "}
+                  {paymentDetails.date}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Status:</span>{" "}
+                  <span className="capitalize">{paymentDetails.status}</span>
+                </p>
+              </div>
+            )}
+            <p className="mt-4 text-gray-600">Your order has been confirmed.</p>
+            <div className="mt-6 space-y-4">
+              <Link
+                href="/orders"
+                className="inline-block px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                View Orders
+              </Link>
+              <p className="text-sm text-gray-500">
+                Redirecting to orders page in 5 seconds...
+              </p>
+            </div>
           </div>
         ) : (
           <div className="text-center">
