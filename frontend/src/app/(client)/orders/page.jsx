@@ -396,32 +396,40 @@ const OrdersPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         {order.isPaid !== "completed" && (
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleStripePayment(order)}
-                              disabled={paymentLoading}
-                              className={`px-4 py-2 rounded ${
-                                paymentLoading
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-green-500 hover:bg-green-600"
-                              } text-white`}
-                            >
-                              {paymentLoading
-                                ? "Processing..."
-                                : "Pay with Stripe"}
-                            </button>
-                            <button
-                              onClick={() => handleKhaltiPayment(order)}
-                              disabled={paymentLoading}
-                              className={`px-4 py-2 rounded ${
-                                paymentLoading
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-blue-500 hover:bg-blue-600"
-                              } text-white`}
-                            >
-                              {paymentLoading
-                                ? "Processing..."
-                                : "Pay with Khalti"}
-                            </button>
+                            {order.workStatus ? (
+                              <>
+                                <button
+                                  onClick={() => handleStripePayment(order)}
+                                  disabled={paymentLoading}
+                                  className={`px-4 py-2 rounded ${
+                                    paymentLoading
+                                      ? "bg-gray-300 cursor-not-allowed"
+                                      : "bg-green-500 hover:bg-green-600"
+                                  } text-white`}
+                                >
+                                  {paymentLoading
+                                    ? "Processing..."
+                                    : "Pay with Stripe"}
+                                </button>
+                                <button
+                                  onClick={() => handleKhaltiPayment(order)}
+                                  disabled={paymentLoading}
+                                  className={`px-4 py-2 rounded ${
+                                    paymentLoading
+                                      ? "bg-gray-300 cursor-not-allowed"
+                                      : "bg-blue-500 hover:bg-blue-600"
+                                  } text-white`}
+                                >
+                                  {paymentLoading
+                                    ? "Processing..."
+                                    : "Pay with Khalti"}
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-gray-500 italic">
+                                Waiting for seller to complete the work
+                              </span>
+                            )}
                           </div>
                         )}
                         <button
