@@ -7,6 +7,7 @@ import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "@/components/StripePaymentForm";
+import WorkStatusButton from "@/components/WorkStatusButton";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -106,47 +107,8 @@ const OrdersPage = () => {
     }
   };
 
-  const handleToggleWorkStatus = async (orderId, currentStatus) => {
-    try {
-      setUpdateLoading(true);
-      const token = localStorage.getItem("currentUser");
-
-      const response = await fetch(
-        `http://localhost:7700/api/order/updateWorkStatus/${orderId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            workStatus: !currentStatus,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update work status");
-      }
-
-      toast.success("Work status updated successfully");
-
-      // Update the orders list with the new status
-      setOrders(
-        orders.map((order) =>
-          order._id === orderId
-            ? { ...order, workStatus: !currentStatus }
-            : order
-        )
-      );
-    } catch (error) {
-      console.error("Error updating work status:", error);
-      toast.error(error.message || "Failed to update work status");
-    } finally {
-      setUpdateLoading(false);
-    }
+  const handleStatusUpdate = () => {
+    fetchOrders(); // Refresh orders after status update
   };
 
   const handleStripePayment = (order) => {
@@ -279,13 +241,19 @@ const OrdersPage = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Work Status
+                    Payment Status
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Payment Status
+                    Escrow Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Work Status
                   </th>
                   {!user?.isSeller && (
                     <th
@@ -344,38 +312,6 @@ const OrdersPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {user?.isSeller ? (
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={order.workStatus}
-                            onChange={() =>
-                              handleToggleWorkStatus(
-                                order._id,
-                                order.workStatus
-                              )
-                            }
-                            disabled={updateLoading}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          <span className="ml-3 text-sm font-medium text-gray-900">
-                            {order.workStatus ? "Completed" : "In Progress"}
-                          </span>
-                        </label>
-                      ) : (
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            order.workStatus
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {order.workStatus ? "Completed" : "In Progress"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
                           order.isPaid === "completed"
@@ -392,54 +328,110 @@ const OrdersPage = () => {
                             : "Unpaid"}
                       </span>
                     </td>
-                    {!user?.isSeller && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        {order.isPaid !== "completed" && (
-                          <div className="flex gap-2">
-                            {order.workStatus ? (
-                              <>
-                                <button
-                                  onClick={() => handleStripePayment(order)}
-                                  disabled={paymentLoading}
-                                  className={`px-4 py-2 rounded ${
-                                    paymentLoading
-                                      ? "bg-gray-300 cursor-not-allowed"
-                                      : "bg-green-500 hover:bg-green-600"
-                                  } text-white`}
-                                >
-                                  {paymentLoading
-                                    ? "Processing..."
-                                    : "Pay with Stripe"}
-                                </button>
-                                <button
-                                  onClick={() => handleKhaltiPayment(order)}
-                                  disabled={paymentLoading}
-                                  className={`px-4 py-2 rounded ${
-                                    paymentLoading
-                                      ? "bg-gray-300 cursor-not-allowed"
-                                      : "bg-blue-500 hover:bg-blue-600"
-                                  } text-white`}
-                                >
-                                  {paymentLoading
-                                    ? "Processing..."
-                                    : "Pay with Khalti"}
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-gray-500 italic">
-                                Waiting for seller to complete the work
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleDeleteClick(order)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {order.escrowId ? (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            order.escrowId.status === "holding"
+                              ? "bg-blue-100 text-blue-800"
+                              : order.escrowId.status === "waitingToRelease"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : order.escrowId.status === "released"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }`}
                         >
-                          Delete
-                        </button>
+                          {order.escrowId.status}
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          No Escrow
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Seller:</span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              order.sellerWorkStatus
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {order.sellerWorkStatus
+                              ? "Completed"
+                              : "In Progress"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Buyer:</span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              order.buyerWorkStatus
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {order.buyerWorkStatus
+                              ? "Completed"
+                              : "In Progress"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    {!user?.isSeller && order.isPaid !== "completed" && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleStripePayment(order)}
+                            disabled={paymentLoading}
+                            className={`px-4 py-2 rounded ${
+                              paymentLoading
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : "bg-green-500 hover:bg-green-600"
+                            } text-white`}
+                          >
+                            {paymentLoading
+                              ? "Processing..."
+                              : "Pay with Stripe"}
+                          </button>
+                          <button
+                            onClick={() => handleKhaltiPayment(order)}
+                            disabled={paymentLoading}
+                            className={`px-4 py-2 rounded ${
+                              paymentLoading
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-600"
+                            } text-white`}
+                          >
+                            {paymentLoading
+                              ? "Processing..."
+                              : "Pay with Khalti"}
+                          </button>
+                        </div>
                       </td>
                     )}
+                    {order.isPaid === "completed" && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <WorkStatusButton
+                          order={order}
+                          isSeller={user?.isSeller}
+                          onStatusUpdate={handleStatusUpdate}
+                        />
+                      </td>
+                    )}
+
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => handleDeleteClick(order)}
+                        className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
