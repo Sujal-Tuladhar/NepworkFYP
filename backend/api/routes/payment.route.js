@@ -13,6 +13,7 @@ import Order from "../models/order.model.js";
 import Payment from "../models/payment.model.js";
 import Gig from "../models/gig.model.js";
 import Stripe from "stripe";
+import Escrow from "../models/escrow.model.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -136,9 +137,18 @@ router.get("/complete-khalti-payment", async (req, res) => {
       paymentConfirmation: true,
     });
 
-    // Update order payment status
+    // Create escrow record
+    const escrow = await Escrow.create({
+      orderId: payment.orderId,
+      amount: payment.amount,
+      status: "holding",
+    });
+
+    // Update order with escrow ID and payment status
     await Order.findByIdAndUpdate(payment.orderId, {
       isPaid: "completed",
+      escrowId: escrow._id,
+      orderStatus: "pending",
     });
 
     // Redirect to frontend success page
@@ -351,9 +361,18 @@ router.post("/verify-stripe", validate, async (req, res) => {
           paymentConfirmation: true,
         });
 
-        // Update order status
+        // Create escrow record
+        const escrow = await Escrow.create({
+          orderId: payment.orderId,
+          amount: payment.amount,
+          status: "holding",
+        });
+
+        // Update order status with escrow ID
         await Order.findByIdAndUpdate(payment.orderId, {
           isPaid: "completed",
+          escrowId: escrow._id,
+          orderStatus: "pending",
         });
 
         return res.json({
@@ -465,9 +484,18 @@ router.get("/verify/:paymentId", validate, async (req, res) => {
               paymentConfirmation: true,
             });
 
-            // Update order status
+            // Create escrow record
+            const escrow = await Escrow.create({
+              orderId: payment.orderId,
+              amount: payment.amount,
+              status: "holding",
+            });
+
+            // Update order status with escrow ID
             await Order.findByIdAndUpdate(payment.orderId, {
               isPaid: "completed",
+              escrowId: escrow._id,
+              orderStatus: "pending",
             });
 
             return res.json({

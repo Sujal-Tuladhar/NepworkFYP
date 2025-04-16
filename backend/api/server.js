@@ -13,6 +13,7 @@ import paymentRoutes from "./routes/payment.route.js";
 import chats from "./utils/data.js";
 import chatRoutes from "./routes/chat.route.js";
 import messageRoutes from "./routes/message.route.js";
+import escrowRoutes from "./routes/escrow.route.js";
 import { Server } from "socket.io";
 import http from "http";
 
@@ -68,6 +69,8 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/chat", chatRoutes);
 
 app.use("/api/message", messageRoutes);
+
+app.use("/api/escrow", escrowRoutes);
 
 // app.get("/api/chat", (req, res) => {
 //   res.send(chats);
