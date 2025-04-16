@@ -342,56 +342,101 @@ router.post("/verify-stripe", validate, async (req, res) => {
   try {
     const { paymentIntentId } = req.body;
 
-    // Find payment record
+    if (!paymentIntentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment intent ID is required",
+      });
+    }
+
+    // Retrieve the payment intent from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Find the payment record by transactionId
     const payment = await Payment.findOne({ transactionId: paymentIntentId });
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Payment not found",
+        message: "Payment record not found",
       });
     }
 
-    // Verify payment with Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Handle different payment intent statuses
+    switch (paymentIntent.status) {
+      case "succeeded":
+        // Update payment status
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: "success",
+          paymentConfirmation: true,
+        });
 
-    if (paymentIntent.status === "succeeded") {
-      // Update payment status
-      await Payment.findByIdAndUpdate(payment._id, {
-        status: "success",
-        paymentConfirmation: true,
-      });
+        // Check if escrow already exists for this order
+        const existingEscrow = await Escrow.findOne({
+          orderId: payment.orderId,
+        });
+        if (existingEscrow) {
+          return res.status(400).json({
+            success: false,
+            message: "Escrow already exists for this order",
+          });
+        }
 
-      // Check if escrow already exists
-      const existingEscrow = await Escrow.findOne({ orderId: payment.orderId });
-      if (!existingEscrow) {
-        // Create escrow record only if it doesn't exist
+        // Create escrow record
         const escrow = await Escrow.create({
           orderId: payment.orderId,
           amount: payment.amount,
           status: "holding",
         });
 
-        // Update order with escrow ID
+        // Update order status with escrow ID
         await Order.findByIdAndUpdate(payment.orderId, {
           isPaid: "completed",
           escrowId: escrow._id,
           orderStatus: "pending",
         });
-      }
 
-      return res.json({
-        success: true,
-        message: "Payment verified successfully",
-        payment,
-      });
+        return res.json({
+          success: true,
+          status: "succeeded",
+          payment: {
+            ...payment.toObject(),
+            status: "success",
+            paymentConfirmation: true,
+          },
+        });
+
+      case "processing":
+        return res.json({
+          success: true,
+          status: "pending",
+          payment,
+          message: "Payment is still processing",
+        });
+
+      case "requires_payment_method":
+      case "canceled":
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: "failed",
+        });
+
+        return res.json({
+          success: true,
+          status: "failed",
+          payment: {
+            ...payment.toObject(),
+            status: "failed",
+          },
+          message: "Payment failed or was canceled",
+        });
+
+      default:
+        return res.json({
+          success: true,
+          status: "pending",
+          payment,
+          message: "Payment status unknown",
+        });
     }
-
-    return res.json({
-      success: true,
-      status: "pending",
-      payment,
-      message: "Payment is still processing",
-    });
   } catch (error) {
     console.error("Error verifying payment:", error);
     res.status(500).json({
@@ -414,7 +459,7 @@ router.get("/verify/:paymentId", validate, async (req, res) => {
       });
     }
 
-    // Find payment record
+    // Find the payment record
     const payment = await Payment.findById(paymentId);
     if (!payment) {
       return res.status(404).json({
@@ -423,42 +468,110 @@ router.get("/verify/:paymentId", validate, async (req, res) => {
       });
     }
 
+    // If payment is already confirmed, return success
+    if (payment.status === "success" && payment.paymentConfirmation) {
+      return res.json({
+        success: true,
+        status: "succeeded",
+        payment,
+      });
+    }
+
+    // For Stripe payments, verify with Stripe
     if (payment.paymentGateway === "stripe") {
-      const paymentIntent = await stripe.paymentIntents.retrieve(
-        payment.transactionId
-      );
-
-      if (paymentIntent.status === "succeeded") {
-        // Update payment status
-        await Payment.findByIdAndUpdate(payment._id, {
-          status: "success",
-          paymentConfirmation: true,
-        });
-
-        // Check if escrow already exists
-        const existingEscrow = await Escrow.findOne({
-          orderId: payment.orderId,
-        });
-        if (!existingEscrow) {
-          // Create escrow record only if it doesn't exist
-          const escrow = await Escrow.create({
-            orderId: payment.orderId,
-            amount: payment.amount,
-            status: "holding",
-          });
-
-          // Update order with escrow ID
-          await Order.findByIdAndUpdate(payment.orderId, {
-            isPaid: "completed",
-            escrowId: escrow._id,
-            orderStatus: "pending",
+      try {
+        // Get the payment intent ID from the payment record
+        const paymentIntentId = payment.transactionId;
+        if (!paymentIntentId) {
+          return res.json({
+            success: true,
+            status: "pending",
+            payment,
+            message: "Payment intent not found, waiting for webhook",
           });
         }
 
+        // Retrieve the payment intent from Stripe
+        const paymentIntent =
+          await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        // Handle different payment intent statuses
+        switch (paymentIntent.status) {
+          case "succeeded":
+            // Update payment status
+            await Payment.findByIdAndUpdate(paymentId, {
+              status: "success",
+              paymentConfirmation: true,
+            });
+
+            // Check if escrow already exists for this order
+            const existingEscrow = await Escrow.findOne({
+              orderId: payment.orderId,
+            });
+            if (existingEscrow) {
+              return res.status(400).json({
+                success: false,
+                message: "Escrow already exists for this order",
+              });
+            }
+
+            // Create escrow record
+            const escrow = await Escrow.create({
+              orderId: payment.orderId,
+              amount: payment.amount,
+              status: "holding",
+            });
+
+            // Update order status with escrow ID
+            await Order.findByIdAndUpdate(payment.orderId, {
+              isPaid: "completed",
+              escrowId: escrow._id,
+              orderStatus: "pending",
+            });
+
+            return res.json({
+              success: true,
+              status: "succeeded",
+              payment: {
+                ...payment.toObject(),
+                status: "success",
+                paymentConfirmation: true,
+              },
+            });
+
+          case "processing":
+            return res.json({
+              success: true,
+              status: "pending",
+              payment,
+              message: "Payment is still processing",
+            });
+
+          case "requires_payment_method":
+          case "canceled":
+            return res.json({
+              success: true,
+              status: "failed",
+              payment,
+              message: "Payment failed or was canceled",
+            });
+
+          default:
+            return res.json({
+              success: true,
+              status: "pending",
+              payment,
+              message: "Payment status unknown",
+            });
+        }
+      } catch (stripeError) {
+        console.error("Stripe verification error:", stripeError);
+        // If there's a Stripe error, return the current payment status
         return res.json({
           success: true,
-          message: "Payment verified successfully",
+          status: payment.status,
           payment,
+          message: "Error verifying with Stripe, using current status",
         });
       }
     }
