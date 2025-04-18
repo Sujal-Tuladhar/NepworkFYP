@@ -1,8 +1,9 @@
 import express from "express";
-import { validate } from "../middleware/validate.js";
+import { validate, verifyAdmin } from "../middleware/validate.js";
 import Escrow from "../models/escrow.model.js";
 import Order from "../models/order.model.js";
 import Payment from "../models/payment.model.js";
+import Payout from "../models/payout.model.js";
 
 const router = express.Router();
 
@@ -147,20 +148,20 @@ router.put("/update-buyer-status/:orderId", validate, async (req, res) => {
 });
 
 // Admin release escrow
-router.put("/release/:escrowId", validate, async (req, res) => {
+router.post("/release/:escrowId", verifyAdmin, async (req, res) => {
   try {
     const { escrowId } = req.params;
 
-    // Verify that the user is an admin
-    if (!req.user.isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: "Only admin can release escrow",
+    // Find the escrow and populate necessary fields
+    const escrow = await Escrow.findById(escrowId)
+      .populate({
+        path: 'orderId',
+        populate: [
+          { path: 'sellerId', select: 'username email' },
+          { path: 'buyerId', select: 'username email' }
+        ]
       });
-    }
 
-    // Find and update escrow
-    const escrow = await Escrow.findById(escrowId);
     if (!escrow) {
       return res.status(404).json({
         success: false,
@@ -175,24 +176,118 @@ router.put("/release/:escrowId", validate, async (req, res) => {
       });
     }
 
-    // Update escrow status
-    await Escrow.findByIdAndUpdate(escrowId, {
-      status: "released",
-      adminApproved: true,
-    });
+    // Update escrow status and add release information
+    const updatedEscrow = await Escrow.findByIdAndUpdate(
+      escrowId,
+      {
+        status: "released",
+        releasedAt: new Date(),
+        releasedBy: req.userId
+      },
+      { new: true }
+    );
 
     // Update order status
-    await Order.findOneAndUpdate({ escrowId }, { orderStatus: "completed" });
+    await Order.findByIdAndUpdate(escrow.orderId._id, {
+      orderStatus: "completed"
+    });
 
     res.json({
       success: true,
       message: "Escrow released successfully",
+      escrow: updatedEscrow
     });
   } catch (error) {
     console.error("Error releasing escrow:", error);
     res.status(500).json({
       success: false,
       message: "Failed to release escrow",
+      error: error.message,
+    });
+  }
+});
+
+// Get all escrow orders waiting for release
+router.get("/waiting-for-release", verifyAdmin, async (req, res) => {
+  try {
+    const escrows = await Escrow.find({ status: "waitingToRelease" })
+      .populate({
+        path: "orderId",
+        populate: [
+          {
+            path: "sellerId",
+            select: "username email profilePic"
+          },
+          {
+            path: "buyerId",
+            select: "username email profilePic"
+          },
+          {
+            path: "gigId",
+            select: "title price"
+          }
+        ]
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(escrows);
+  } catch (err) {
+    console.error("Error fetching escrows:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get payout history
+router.get("/payouts", verifyAdmin, async (req, res) => {
+  try {
+    const payouts = await Payout.find()
+      .populate("orderId")
+      .populate("sellerId", "username email")
+      .populate("buyerId", "username email")
+      .populate("releasedBy", "username email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(payouts);
+  } catch (err) {
+    console.error("Error fetching payouts:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get escrow records waiting for release
+router.get("/waiting-for-release", verifyAdmin, async (req, res) => {
+  try {
+    // Find escrow records with status "waitingToRelease"
+    const escrowRecords = await Escrow.find({ status: "waitingToRelease" })
+      .populate({
+        path: "orderId",
+        select: "gigId buyerId sellerId price",
+        populate: [
+          {
+            path: "gigId",
+            select: "title",
+          },
+          {
+            path: "buyerId",
+            select: "username profilePic",
+          },
+          {
+            path: "sellerId",
+            select: "username profilePic",
+          },
+        ],
+      })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: escrowRecords,
+    });
+  } catch (error) {
+    console.error("Error fetching escrow records:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch escrow records",
       error: error.message,
     });
   }

@@ -10,6 +10,7 @@ import gigRoutes from "./routes/gig.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import orderRoutes from "./routes/order.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+import adminRoutes from "./routes/admin.route.js";
 import chats from "./utils/data.js";
 import chatRoutes from "./routes/chat.route.js";
 import messageRoutes from "./routes/message.route.js";
@@ -20,7 +21,7 @@ import http from "http";
 dotenv.config();
 const app = express();
 //Conencting Frontend to backend #Credinatial true allows to send the cookies,tokens
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"], credentials: true }));
 // Parses JSON request bodies into req.body.
 app.use(express.json());
 // Parses cookies into req.cookies.
@@ -65,6 +66,8 @@ app.use("/api/review", reviewRoutes);
 app.use("/api/order", orderRoutes);
 
 app.use("/api/payment", paymentRoutes);
+
+app.use("/api/admin", adminRoutes);
 
 app.use("/api/chat", chatRoutes);
 
