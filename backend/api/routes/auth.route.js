@@ -7,6 +7,7 @@ import { generateOTP } from "../utils/base.js";
 import { sendMail } from "../utils/mailer.js";
 const router = express.Router();
 const passwordMap = new Map(); // Store OTPs temporarily
+const registrationOTPMap = new Map(); // Store registration OTPs
 
 router.post("/register", async (req, res, next) => {
   try {
@@ -151,12 +152,10 @@ router.post("/admin/login", async (req, res, next) => {
     const { email, password } = req.body;
 
     console.log(email, password);
-    
-    
+
     const user = await User.findOne({ email });
 
     console.log(user);
-    
 
     if (!user) return next(createError(404, "User not found"));
 
@@ -173,7 +172,7 @@ router.post("/admin/login", async (req, res, next) => {
       {
         id: user._id,
         isAdmin: user.isAdmin,
-        isSeller: user.isSeller
+        isSeller: user.isSeller,
       },
       process.env.JWT_KEY,
       { expiresIn: "7d" }
@@ -182,8 +181,7 @@ router.post("/admin/login", async (req, res, next) => {
     const { password: pass, ...info } = user._doc;
 
     console.log(info);
-    
-    
+
     res
       .cookie("accessToken", token, {
         httpOnly: true,
@@ -191,14 +189,65 @@ router.post("/admin/login", async (req, res, next) => {
         sameSite: "Strict",
       })
       .status(200)
-      .json({ 
-        ...info, 
+      .json({
+        ...info,
         accessToken: token,
-        message: "Admin login successful" 
+        message: "Admin login successful",
       });
   } catch (err) {
     console.error("Admin Login Error:", err);
     next(err);
+  }
+});
+
+router.post("/send-registration-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    const otp = generateOTP();
+    registrationOTPMap.set(email, otp);
+    console.log("Registration OTP:", otp);
+
+    const mailOptions = {
+      from: process.env.GMAIL,
+      to: email,
+      subject: "Registration Verification OTP",
+      text: `Your OTP for registration is: ${otp}. This OTP will expire in 10 minutes.`,
+    };
+
+    await sendMail(mailOptions);
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("Send Registration OTP Error:", err);
+    return res.status(500).json({ error: "Failed to send OTP" });
+  }
+});
+
+router.post("/verify-registration-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const storedOTP = registrationOTPMap.get(email);
+
+    if (!storedOTP) {
+      return res.status(400).json({ error: "OTP expired or not found" });
+    }
+
+    if (storedOTP !== otp) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    // Clear the OTP after successful verification
+    registrationOTPMap.delete(email);
+    return res.status(200).json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.error("Verify Registration OTP Error:", err);
+    return res.status(500).json({ error: "Failed to verify OTP" });
   }
 });
 

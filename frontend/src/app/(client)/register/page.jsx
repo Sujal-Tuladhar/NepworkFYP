@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 import newRequest from "@/app/utils/newRequest.js";
@@ -19,6 +19,14 @@ const RegisterPage = () => {
     desc: "",
     phone: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [emailValid, setEmailValid] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
   const router = useRouter();
   const countries = [
@@ -30,14 +38,82 @@ const RegisterPage = () => {
     "New Zealand",
   ];
 
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendTimer]);
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (e) => {
+    const email = e.target.value;
+    setUser((prev) => ({ ...prev, email }));
+    setEmailValid(validateEmail(email));
+  };
+
+  const handleSendOtp = async () => {
+    if (!emailValid) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setSendingOtp(true);
+    try {
+      const res = await newRequest.post("auth/send-registration-otp", {
+        email: user.email,
+      });
+      toast.success("OTP sent successfully");
+      setOtpSent(true);
+      setResendTimer(30);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to send OTP");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      toast.error("Please enter a 6-digit OTP");
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const res = await newRequest.post("auth/verify-registration-otp", {
+        email: user.email,
+        otp,
+      });
+      toast.success("OTP verified successfully");
+      setOtpVerified(true);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Invalid OTP");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const validateForm = () => {
     if (!user.username.trim()) {
       toast.error("Username is required");
       return false;
     }
 
-    if (!user.email.includes("@")) {
-      toast.error("Invalid email format");
+    if (!emailValid) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+
+    if (!otpVerified) {
+      toast.error("Please verify your email with OTP");
       return false;
     }
 
@@ -74,6 +150,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    setLoading(true);
     try {
       const url = file ? await upload(file) : "";
       console.log("Uploaded URL:", url);
@@ -89,26 +166,27 @@ const RegisterPage = () => {
     } catch (err) {
       console.error("Error during registration:", err);
       toast.error("Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
-      <div className="p-3 flex items-center justify-center  overflow-y-hidden mt-3">
+      <div className="p-3 flex items-center justify-center overflow-y-hidden mt-3">
         <Toaster richColors position="top-right" />
         <div className="max-w-[50rem] p-2 bg-white border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,128,0,0.5)]">
           <form onSubmit={handleSubmit}>
-            <div className="flex justify-between items-center ">
+            <div className="flex justify-between items-center">
               <h1 className="text-xl underline font-semibold">
                 Create a New Account
               </h1>
-
               <h2 className="text-2xl p-2 font-bold border-b-2 border-l-2 text-gray-800">
                 Register
               </h2>
             </div>
             <div className="flex flex-col md:flex-row gap-5">
-              {/* Left  */}
+              {/* Left */}
               <div className="md:w-1/2 px-1 py-5">
                 <div className="flex flex-col gap-2">
                   <label htmlFor="name">Username</label>
@@ -121,17 +199,127 @@ const RegisterPage = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="name">E-Mail</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="E-Mail"
-                    className="border-2 p-1"
-                    onChange={handleChange}
-                  />
+                  <label htmlFor="email">E-Mail</label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="E-Mail"
+                      className="border-2 p-1 w-full"
+                      value={user.email}
+                      onChange={handleEmailChange}
+                      disabled={otpSent}
+                    />
+                    {emailValid && !otpSent && (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={sendingOtp}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      >
+                        {sendingOtp ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                        ) : (
+                          <div className="border-2 border-gray-400 rounded-full p-0.5 cursor-pointer bg-gray-400">
+                            <svg
+                              className="h-5 w-5 text-black"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
+                {otpSent && (
+                  <div className="flex flex-col gap-2 mt-3">
+                    <div className="">
+                      <label htmlFor="otp">OTP</label>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="otp"
+                        placeholder="Enter 6-digit OTP"
+                        className="border-2 p-1 w-full"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        maxLength={6}
+                        disabled={otpVerified}
+                      />
+                      {otp.length === 6 && !otpVerified && (
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={verifyingOtp}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        >
+                          {verifyingOtp ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                          ) : (
+                            <div className="border-2 border-gray-400 rounded-full p-0.5 cursor-pointer bg-gray-400">
+                              <svg
+                                className="h-5 w-5 text-black"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      )}
+                      {otpVerified && (
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                          <svg
+                            className="h-5 w-5 text-green-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {resendTimer > 0 ? (
+                      <p className="text-sm text-gray-500">
+                        Resend OTP in {resendTimer}s
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={sendingOtp}
+                        className="text-sm border-2 w-fit px-3  border-black rounded-tr-2xl shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="name">Password</label>
+                  <label htmlFor="password">Password</label>
                   <input
                     type="password"
                     name="password"
@@ -140,22 +328,24 @@ const RegisterPage = () => {
                     onChange={handleChange}
                   />
                 </div>
-                <div className="mt-3">
-                  <label htmlFor="name">Profile Picture</label>
+                <div className="flex flex-col gap-2 mt-3">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
                   <input
-                    type="file"
-                    className="border-2 p-1 mt-1 rounded-br-3xl w-full"
-                    onChange={(e) => setFile(e.target.files[0])}
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    className="border-2 p-1"
+                    onChange={handleChange}
                   />
                 </div>
               </div>
-              {/* Right  */}
+              {/* Right */}
               <div className="md:w-1/2 p-4 mt-1">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="name">Country</label>
+                  <label htmlFor="country">Country</label>
                   <select
                     name="country"
-                    className="w-full p-2  border-2 "
+                    className="w-full p-2 border-2"
                     onChange={handleChange}
                     value={user.country}
                   >
@@ -168,27 +358,25 @@ const RegisterPage = () => {
                   </select>
                 </div>
                 <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="name">Phone No</label>
+                  <label htmlFor="phone">Phone No</label>
                   <input
                     type="phone"
-                    name="text"
+                    name="phone"
                     placeholder="+977-98XXXXXXXX"
                     className="border-2 p-1"
                     onChange={handleChange}
                   />
                 </div>
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="name">Confirm Password</label>
+                <div className="mt-3">
+                  <label htmlFor="profilePic">Profile Picture</label>
                   <input
-                    type="password"
-                    name="confirmPassword"
-                    placeholder="Confirm Password"
-                    className="border-2 p-1"
-                    onChange={handleChange}
+                    type="file"
+                    className="border-2 p-1 mt-1 rounded-br-3xl w-full"
+                    onChange={(e) => setFile(e.target.files[0])}
                   />
                 </div>
                 <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="name">User Description</label>
+                  <label htmlFor="desc">User Description</label>
                   <textarea
                     placeholder="A short description of yourself"
                     name="desc"
@@ -200,8 +388,14 @@ const RegisterPage = () => {
                 </div>
               </div>
             </div>
-            <button className="px-12 py-1.5 bg-blue-200 border-2 rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              Register
+            <button
+              type="submit"
+              disabled={loading || !otpVerified}
+              className={`px-12 py-1.5 bg-blue-200 border-2 rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
+                loading || !otpVerified ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
           <hr className="border-t-4 border-black mt-5" />

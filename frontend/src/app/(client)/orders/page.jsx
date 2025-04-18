@@ -424,14 +424,16 @@ const OrdersPage = () => {
                       </td>
                     )}
 
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleDeleteClick(order)}
-                        className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
+                    {!user?.isSeller && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleDeleteClick(order)}
+                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
