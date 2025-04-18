@@ -145,4 +145,61 @@ router.post("/logout", (req, res) => {
   res.status(200).json({ message: "User has been logged out. " });
 });
 
+// Admin login route
+router.post("/admin/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    console.log(email, password);
+    
+    
+    const user = await User.findOne({ email });
+
+    console.log(user);
+    
+
+    if (!user) return next(createError(404, "User not found"));
+
+    console.log(user);
+
+    // Check if user is an admin
+    if (!user.isAdmin) return next(createError(403, "Not authorized as admin"));
+
+    const isCorrect = bcrypt.compareSync(password, user.password);
+    if (!isCorrect) return next(createError(401, "Invalid credentials"));
+
+    // Generate JWT Token with admin flag
+    const token = jwt.sign(
+      {
+        id: user._id,
+        isAdmin: user.isAdmin,
+        isSeller: user.isSeller
+      },
+      process.env.JWT_KEY,
+      { expiresIn: "7d" }
+    );
+
+    const { password: pass, ...info } = user._doc;
+
+    console.log(info);
+    
+    
+    res
+      .cookie("accessToken", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+      })
+      .status(200)
+      .json({ 
+        ...info, 
+        accessToken: token,
+        message: "Admin login successful" 
+      });
+  } catch (err) {
+    console.error("Admin Login Error:", err);
+    next(err);
+  }
+});
+
 export default router;
