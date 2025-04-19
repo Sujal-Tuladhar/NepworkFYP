@@ -126,7 +126,11 @@ const Dashboard = () => {
     return null;
   }
 
-  const userGigs = gigs.filter((gig) => gig.userId === user?._id);
+  const userGigs = gigs.filter((gig) => {
+    console.log("User ID:", user?._id);
+    console.log("Gig User ID:", gig.userId?._id);
+    return gig.userId?._id?.toString() === user?._id?.toString();
+  });
 
   const handleEdit = (gig) => {
     setSelectedGig(gig);
@@ -207,6 +211,8 @@ const Dashboard = () => {
       toast.error("Failed to delete gig");
     }
   };
+  console.log("Selected Gig:", selectedGig);
+  console.log(" 1234563424:", userGigs);
 
   return (
     <div className="container mx-auto p-6">
@@ -242,6 +248,7 @@ const Dashboard = () => {
         // Seller Dashboard - Gigs Section
         <div>
           <h2 className="text-2xl font-bold mb-6">Your Gigs</h2>
+
           {userGigs.length === 0 ? (
             <div className="text-center py-12">
               <h3 className="text-xl font-semibold mb-2">No gigs found</h3>
@@ -257,6 +264,8 @@ const Dashboard = () => {
                   className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
                   onClick={() => router.push(`/gigs/${gig._id}`)}
                 >
+                  {console.log("Gig Details123:", gig)}
+
                   {gig.cover && (
                     <img
                       src={gig.cover}
