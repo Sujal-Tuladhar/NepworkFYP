@@ -16,6 +16,7 @@ const GigsPage = () => {
     maxPrice: "",
     sortBy: "newest",
     category: "",
+    search: "",
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -50,6 +51,7 @@ const GigsPage = () => {
         ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
         ...(filters.sortBy && { sortBy: filters.sortBy }),
         ...(filters.category && { category: filters.category }),
+        ...(filters.search && { search: filters.search }),
       });
 
       const response = await fetch(
@@ -106,6 +108,21 @@ const GigsPage = () => {
       {/* Filters and Sort Section */}
       <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          {/* Search Bar */}
+          <div className="w-full md:w-64">
+            <label className="block text-sm font-medium mb-1">
+              Search Gigs
+            </label>
+            <input
+              type="text"
+              name="search"
+              value={filters.search}
+              onChange={handleFilterChange}
+              className="w-full p-2 border-2 border-black rounded-lg"
+              placeholder="Search by title..."
+            />
+          </div>
+
           {/* Price Filters */}
           <div className="flex gap-4">
             <div>

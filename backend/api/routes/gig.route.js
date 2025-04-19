@@ -69,10 +69,16 @@ router.get("/getGigs", validate, async (req, res, next) => {
       category,
       page = 1,
       limit = 12,
+      search = "",
     } = req.query;
 
     // Build query
     const query = {};
+
+    // Title search
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
+    }
 
     // Price filter
     if (minPrice || maxPrice) {

@@ -169,7 +169,7 @@ const OrdersPage = () => {
       }
 
       // Redirect to chat page with the chat ID
-      router.push(`/chat/${data._id}`);
+      router.push(`/message`);
     } catch (error) {
       console.error("Error accessing chat:", error);
       toast.error(error.message || "Failed to access chat");
@@ -213,7 +213,7 @@ const OrdersPage = () => {
           {!user?.isSeller && (
             <Link
               href="/gigs"
-              className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="mt-4 inline-block px-6 py-3 border-2 border-black  rounded  hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
             >
               Browse Gigs
             </Link>

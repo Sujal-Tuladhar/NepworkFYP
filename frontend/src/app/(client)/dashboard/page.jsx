@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [gigs, setGigs] = useState([]);
   const [userGigs, setUserGigs] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [completedOrders, setCompletedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [pagination, setPagination] = useState({
@@ -86,6 +87,34 @@ const Dashboard = () => {
             total: gigsData.pagination.total,
             pages: gigsData.pagination.pages,
           });
+
+          // Fetch completed orders for seller
+          const completedOrdersResponse = await fetch(
+            "http://localhost:7700/api/order/getOrder",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!completedOrdersResponse.ok)
+            throw new Error("Failed to fetch completed orders");
+          const completedOrdersData = await completedOrdersResponse.json();
+
+          const completedOrders = completedOrdersData.data.filter((order) => {
+            // For seller, we need to check if the gig belongs to the current user
+            const isSellerGig =
+              order.gigId && order.gigId.userId === userData._id;
+
+            return (
+              order.orderStatus === "completed" &&
+              order.escrowId?.status === "released" &&
+              isSellerGig
+            );
+          });
+
+          setCompletedOrders(completedOrders);
         } else {
           const ordersResponse = await fetch(
             "http://localhost:7700/api/order/getOrder",
@@ -98,7 +127,18 @@ const Dashboard = () => {
 
           if (!ordersResponse.ok) throw new Error("Failed to fetch orders");
           const ordersData = await ordersResponse.json();
+
           setOrders(ordersData.data || []);
+
+          // Filter completed orders with released escrow for buyer
+          const completedOrders = ordersData.data.filter((order) => {
+            return (
+              order.orderStatus === "completed" &&
+              order.escrowId?.status === "released"
+            );
+          });
+
+          setCompletedOrders(completedOrders);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -331,6 +371,77 @@ const Dashboard = () => {
               ))}
             </div>
           )}
+
+          {/* Completed Orders Section for Seller */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Completed Orders</h2>
+            {completedOrders.length === 0 ? (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-semibold mb-2">
+                  No completed orders
+                </h3>
+                <p className="text-gray-600">
+                  You haven't completed any orders yet
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
+                  >
+                    {order.gigId?.cover && (
+                      <img
+                        src={order.gigId.cover}
+                        alt={order.gigId.title}
+                        className="w-full h-48 object-cover rounded-lg mb-4"
+                      />
+                    )}
+                    <h3 className="text-xl font-semibold mb-2">
+                      {order.gigId?.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {order.gigId?.shortDesc}
+                    </p>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-lg font-bold">
+                        Rs {order.price}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-500">★</span>
+                        <span className="text-gray-600">
+                          {order.gigId?.starNumber > 0
+                            ? (
+                                order.gigId.totalStars / order.gigId.starNumber
+                              ).toFixed(1)
+                            : "0.0"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Status:</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                          Completed
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Escrow:</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                          Released
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+                      <span>Delivery: {order.gigId?.delivery} days</span>
+                      <span>Revisions: {order.gigId?.revisions}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         // Buyer Dashboard - Orders Section
@@ -342,7 +453,7 @@ const Dashboard = () => {
               <p className="text-gray-600">You haven't placed any orders yet</p>
               <Link
                 href="/gigs"
-                className="mt-4 inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="mt-4 inline-block px-6 py-3 border-2 border-black  rounded  hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
               >
                 Browse Gigs
               </Link>
@@ -440,6 +551,77 @@ const Dashboard = () => {
               ))}
             </div>
           )}
+
+          {/* Completed Orders Section for Buyer */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Completed Orders</h2>
+            {completedOrders.length === 0 ? (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-semibold mb-2">
+                  No completed orders
+                </h3>
+                <p className="text-gray-600">
+                  You haven't completed any orders yet
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
+                  >
+                    {order.gigId?.cover && (
+                      <img
+                        src={order.gigId.cover}
+                        alt={order.gigId.title}
+                        className="w-full h-48 object-cover rounded-lg mb-4"
+                      />
+                    )}
+                    <h3 className="text-xl font-semibold mb-2">
+                      {order.gigId?.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {order.gigId?.shortDesc}
+                    </p>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-lg font-bold">
+                        Rs {order.price}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-500">★</span>
+                        <span className="text-gray-600">
+                          {order.gigId?.starNumber > 0
+                            ? (
+                                order.gigId.totalStars / order.gigId.starNumber
+                              ).toFixed(1)
+                            : "0.0"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Status:</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                          Completed
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Escrow:</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                          Released
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+                      <span>Delivery: {order.gigId?.delivery} days</span>
+                      <span>Revisions: {order.gigId?.revisions}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
