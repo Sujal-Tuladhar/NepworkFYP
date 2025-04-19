@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/app/context/AuthContext";
+import Image from "next/image";
 
 const GigsPage = () => {
   const router = useRouter();
@@ -21,6 +22,7 @@ const GigsPage = () => {
     total: 0,
     pages: 0,
   });
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const categories = [
     "Graphics & Design",
@@ -209,6 +211,32 @@ const GigsPage = () => {
               <span>Delivery: {gig.delivery} days</span>
               <span>Revisions: {gig.revisions}</span>
             </div>
+
+            {/* Seller Details Section */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10">
+                  <Image
+                    src={gig.userId?.profilePic || "/default-profile.png"}
+                    alt={gig.userId?.username || "Seller"}
+                    fill
+                    className="rounded-full object-cover cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedUserId(gig.userId?._id);
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {gig.userId?.username}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {gig.userId?.email}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -244,6 +272,14 @@ const GigsPage = () => {
             Try adjusting your filters to see more results
           </p>
         </div>
+      )}
+
+      {/* Add ProfileCard component */}
+      {selectedUserId && (
+        <ProfileCard
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
     </div>
   );

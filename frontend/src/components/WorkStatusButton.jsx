@@ -7,6 +7,14 @@ const WorkStatusButton = ({ order, isSeller, onStatusUpdate }) => {
     ? order.sellerWorkStatus
     : order.buyerWorkStatus;
 
+  // Check if the escrow status is released or waitingToRelease
+  const isEscrowReleased =
+    order.escrowId?.status === "released" ||
+    order.escrowId?.status === "waitingToRelease";
+
+  // Disable the button if trying to mark as incomplete and escrow is released/waiting
+  const isDisabled = loading || (currentStatus && isEscrowReleased);
+
   const handleStatusUpdate = async () => {
     try {
       setLoading(true);
@@ -51,12 +59,12 @@ const WorkStatusButton = ({ order, isSeller, onStatusUpdate }) => {
   return (
     <button
       onClick={handleStatusUpdate}
-      disabled={loading}
-      className={`px-4 py-2 rounded ${
+      disabled={isDisabled}
+      className={`px-4 py-2 border-2 rounded border-black  ${
         currentStatus
-          ? "bg-green-500 hover:bg-green-600"
-          : "bg-yellow-500 hover:bg-yellow-600"
-      } text-white ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+          ? " hover:bg-green-300 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] "
+          : " hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(234,179,8,0.5)]"
+      }  ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       {loading
         ? "Updating..."

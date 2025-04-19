@@ -8,6 +8,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "@/components/StripePaymentForm";
 import WorkStatusButton from "@/components/WorkStatusButton";
+import Image from "next/image";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -24,6 +25,7 @@ const OrdersPage = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   useEffect(() => {
     // Only redirect if auth is loaded and user is not logged in
@@ -166,6 +168,56 @@ const OrdersPage = () => {
     setSelectedOrder(null);
   };
 
+  const handleMessageClick = async (order) => {
+    try {
+      setMessageLoading(true);
+      const token = localStorage.getItem("currentUser");
+      if (!token) {
+        toast.error("Please login to send messages");
+        return;
+      }
+
+      // Get the other user's ID (seller or buyer)
+      const otherUserId = user?.isSeller
+        ? order.buyerId?._id
+        : order.sellerId?._id;
+
+      if (!otherUserId) {
+        toast.error("User not found");
+        return;
+      }
+
+      // Check if chat exists or create new chat
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/chat/accessChat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: otherUserId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to access chat");
+      }
+
+      // Redirect to chat page with the chat ID
+      router.push(`/chat/${data._id}`);
+    } catch (error) {
+      console.error("Error accessing chat:", error);
+      toast.error(error.message || "Failed to access chat");
+    } finally {
+      setMessageLoading(false);
+    }
+  };
+
   // Show loading state while auth is loading
   if (authLoading || loading) {
     return (
@@ -215,75 +267,68 @@ const OrdersPage = () => {
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Gig
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Title
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Price
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     {user?.isSeller ? "Buyer" : "Seller"}
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Payment Status
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Escrow Status
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Work Status
                   </th>
-                  {!user?.isSeller && (
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                  )}
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Message
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.map((order) => (
                   <tr key={order._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <div className="text-sm font-medium text-gray-900">
                         {order.gigId?.title || "Gig Title"}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {order.gigId?.shortDesc || "Short Description"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <div className="text-sm text-gray-900">
                         Rs {order.price}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <img
@@ -311,7 +356,7 @@ const OrdersPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
                           order.isPaid === "completed"
@@ -328,7 +373,7 @@ const OrdersPage = () => {
                             : "Unpaid"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       {order.escrowId ? (
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -349,8 +394,7 @@ const OrdersPage = () => {
                         </span>
                       )}
                     </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Seller:</span>
@@ -382,58 +426,73 @@ const OrdersPage = () => {
                         </div>
                       </div>
                     </td>
-                    {!user?.isSeller && order.isPaid !== "completed" && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <div className="flex gap-2">
+                    <td className="px-4 py-4">
+                      <div className="flex flex-col gap-2">
+                        {!user?.isSeller && order.isPaid !== "completed" && (
+                          <>
+                            <button
+                              onClick={() => handleStripePayment(order)}
+                              disabled={paymentLoading}
+                              className={`w-full px-4 py-2 rounded ${
+                                paymentLoading
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : "bg-green-500 hover:bg-green-600"
+                              } text-white`}
+                            >
+                              {paymentLoading
+                                ? "Processing..."
+                                : "Pay with Stripe"}
+                            </button>
+                            <button
+                              onClick={() => handleKhaltiPayment(order)}
+                              disabled={paymentLoading}
+                              className={`w-full px-4 py-2 rounded ${
+                                paymentLoading
+                                  ? "bg-gray-300 cursor-not-allowed"
+                                  : "bg-blue-500 hover:bg-blue-600"
+                              } text-white`}
+                            >
+                              {paymentLoading
+                                ? "Processing..."
+                                : "Pay with Khalti"}
+                            </button>
+                          </>
+                        )}
+                        {order.isPaid === "completed" && (
+                          <WorkStatusButton
+                            order={order}
+                            isSeller={user?.isSeller}
+                            onStatusUpdate={handleStatusUpdate}
+                          />
+                        )}
+                        {!user?.isSeller && (
                           <button
-                            onClick={() => handleStripePayment(order)}
-                            disabled={paymentLoading}
-                            className={`px-4 py-2 rounded ${
-                              paymentLoading
-                                ? "bg-gray-300 cursor-not-allowed"
-                                : "bg-green-500 hover:bg-green-600"
-                            } text-white`}
+                            onClick={() => handleDeleteClick(order)}
+                            className="w-full px-3 py-2 border-2 border-black  rounded shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:bg-red-300"
                           >
-                            {paymentLoading
-                              ? "Processing..."
-                              : "Pay with Stripe"}
+                            Delete
                           </button>
-                          <button
-                            onClick={() => handleKhaltiPayment(order)}
-                            disabled={paymentLoading}
-                            className={`px-4 py-2 rounded ${
-                              paymentLoading
-                                ? "bg-gray-300 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600"
-                            } text-white`}
-                          >
-                            {paymentLoading
-                              ? "Processing..."
-                              : "Pay with Khalti"}
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                    {order.isPaid === "completed" && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <WorkStatusButton
-                          order={order}
-                          isSeller={user?.isSeller}
-                          onStatusUpdate={handleStatusUpdate}
-                        />
-                      </td>
-                    )}
-
-                    {!user?.isSeller && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => handleDeleteClick(order)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    )}
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => handleMessageClick(order)}
+                        disabled={messageLoading}
+                        className="w-fit border-2 border-black text-white rounded-full p-3"
+                      >
+                        {messageLoading ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                        ) : (
+                          <Image
+                            src="/images/Navbar/Chat.svg"
+                            width={24}
+                            height={24}
+                            alt="chat"
+                          />
+                        )}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

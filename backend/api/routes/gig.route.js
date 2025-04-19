@@ -107,6 +107,10 @@ router.get("/getGigs", validate, async (req, res, next) => {
 
     // Execute query with filters, sort, and pagination
     const gigs = await Gig.find(query)
+      .populate(
+        "userId",
+        "username email profilePic country phone desc isSeller"
+      )
       .sort(sort)
       .skip(skip)
       .limit(Number(limit));

@@ -3,20 +3,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
+import { Toaster, toast } from "sonner";
 
 const LoginPage = () => {
   const router = useRouter();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
@@ -32,16 +28,19 @@ const LoginPage = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Login failed");
+        // Show the error from the server (e.g., incorrect password or email) in a toast.
+        toast.error("Invalid email or password");
+        return; // stop further execution if login fails
       }
 
-      // Call the login function from auth context
+      // Successful login
       login(data.token, data.user);
+      toast.success("Logged in successfully!");
 
-      // Redirect to home page
       router.push("/dashboard");
     } catch (err) {
-      setError(err.message);
+      // Network or unexpected error
+      toast.error("Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -49,20 +48,21 @@ const LoginPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <div className="flex items-center justify-center p-35 bg-gray-100 overflow-hidden">
+      {/* Toast container */}
+      <Toaster richColors position="top-right" />
+
       <div className="w-full max-w-[30rem] p-5 bg-white border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,128,0,0.5)]">
         <div className="flex justify-end mb-6">
           <h2 className="text-2xl font-bold text-gray-800 pb-2 border-b-2 border-l-2 border-black pl-3 pr-1">
             Login
           </h2>
         </div>
+
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col gap-2 mt-3">
             <label htmlFor="email">E-Mail</label>
@@ -76,6 +76,7 @@ const LoginPage = () => {
               required
             />
           </div>
+
           <div className="flex flex-col gap-2 mt-3 mb-6">
             <label htmlFor="password">Password</label>
             <input
@@ -96,8 +97,8 @@ const LoginPage = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-          {error && <p className="text-red-500 text-center mt-2">{error}</p>}
         </form>
+
         <div className="mt-4">
           <hr className="border-t-4 border-black mt-5" />
           <div className="flex justify-between items-center mt-2">
