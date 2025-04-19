@@ -9,7 +9,8 @@ function RightSide({ fetchAgain, setFetchAgain }) {
     <div
       className={`${
         selectedChat ? "flex" : "hidden"
-      } md:flex flex-col items-center p-3 bg-white w-full h-full md:w-[68%] rounded-lg border`}
+      } md:flex flex-col items-center p-3 bg-white w-full  md:w-[68%] h-[77vh] rounded border-2 rounded-bl-3xl border-black shadow-[-4px_4px_0px_0px_rgba(0,128,128,1)]
+`}
     >
       <SingleChat fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
     </div>

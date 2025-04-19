@@ -12,6 +12,18 @@ function Page() {
   const router = useRouter();
 
   useEffect(() => {
+    // Disable scrolling when component mounts
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Re-enable scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
     if (!loading && !isLoggedIn) {
       router.push("/login");
     }
@@ -28,9 +40,13 @@ function Page() {
   return (
     <>
       {isLoggedIn && (
-        <div>
+        <div className="overflow-hidden">
+          {" "}
+          {/* Added overflow-hidden */}
           <SideDrawer />
-          <div className="flex justify-between w-[100%] h-[81vh] p-2.5">
+          <div className="flex justify-between w-[100%] h-[81vh] p-2.5 overflow-hidden">
+            {" "}
+            {/* Added overflow-hidden */}
             <LeftSide fetchAgain={fetchAgain} />
             <RightSide fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
           </div>

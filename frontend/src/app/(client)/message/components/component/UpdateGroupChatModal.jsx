@@ -171,11 +171,11 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
             />
           </button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedChat?.chatName}</DialogTitle>
           </DialogHeader>
-          <div className="w-[100%] flex flex-wrap pb-3">
+          <div className="w-[100%] flex flex-wrap pb-3 gap-1">
             {selectedChat.users.map((u) => (
               <UserBadgeItem
                 key={u._id}
@@ -190,7 +190,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
               id="chatname"
               type="text"
               placeholder="Chat Name"
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 flex-1"
               onChange={(e) => setGroupChatName(e.target.value)}
             />
             <button
@@ -210,17 +210,27 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-          {loading ? (
-            <Spinner />
-          ) : (
-            searchResult?.map((user) => (
-              <UserListItem
-                key={user._id}
-                user={user}
-                handleFunction={() => handleAddUser(user)}
-              />
-            ))
-          )}
+
+          {/* Search results container with limited height and scroll */}
+          <div className="max-h-[213px] overflow-y-auto mb-4">
+            {loading ? (
+              <div className="flex justify-center">
+                <Spinner />
+              </div>
+            ) : (
+              searchResult?.slice(0, 5).map(
+                (
+                  user // Limit to 5 results
+                ) => (
+                  <UserListItem
+                    key={user._id}
+                    user={user}
+                    handleFunction={() => handleAddUser(user)}
+                  />
+                )
+              )
+            )}
+          </div>
 
           <DialogFooter>
             <button

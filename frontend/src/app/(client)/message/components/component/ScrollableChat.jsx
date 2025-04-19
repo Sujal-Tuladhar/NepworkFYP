@@ -31,7 +31,7 @@ const ScrollableChat = ({ messages }) => {
             <div className={`max-w-[85%] ${isCurrentUser ? "ml-4" : "mr-4"}`}>
               {showSender && !isCurrentUser && (
                 <div className="flex items-center mb-1 gap-2">
-                  <div className="w-7 h-7 rounded-full  overflow-hidden">
+                  <div className="w-6 h-6 rounded-full  overflow-hidden">
                     <Image
                       src={m.sender.profilePic || "/default-avatar.png"}
                       alt={m.sender.username}
@@ -40,25 +40,26 @@ const ScrollableChat = ({ messages }) => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <span className="text-xs font-medium text-gray-600">
+                  <span className="text-[14px] font-medium text-gray-600">
                     {m.sender.username}
                   </span>
                 </div>
               )}
-
-              <div
-                className={`rounded-lg p-3 transition-all duration-200 ${
-                  isCurrentUser
-                    ? "bg-blue-600 text-white rounded-br-none hover:bg-blue-700"
-                    : "bg-gray-100 text-gray-800 rounded-bl-none hover:bg-gray-200"
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {m.content}
-                </p>
+              <div className="ml-6">
                 <div
-                  className={`text-xs mt-1 text-right ${
-                    isCurrentUser ? "text-blue-100" : "text-gray-500"
+                  className={`rounded-lg px-3 py-1.5 transition-all duration-200  ${
+                    isCurrentUser
+                      ? "bg-teal-600 text-white rounded-br-none hover:bg-teal-700"
+                      : "bg-gray-200 text-gray-800 rounded-bl-none hover:bg-gray-300 "
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    {m.content}
+                  </p>
+                </div>
+                <div
+                  className={`text-[11px] mt-1 text-right ${
+                    isCurrentUser ? "text-black" : "text-black"
                   }`}
                 >
                   {new Date(m.createdAt).toLocaleTimeString([], {

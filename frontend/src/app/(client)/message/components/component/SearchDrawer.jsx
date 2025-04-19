@@ -108,7 +108,6 @@ const SearchDrawer = () => {
 
   return (
     <div>
-      <Toaster richColors position="top-right" />
       <Drawer
         direction="left"
         open={isOpen}
@@ -117,7 +116,7 @@ const SearchDrawer = () => {
       >
         <DrawerTrigger asChild>
           <button
-            className="flex items-center space-x-2 px-3 py-1.5 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors border-2 border-black"
+            className="flex items-center space-x-2 px-3 py-1.5 text-sm hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors border-2 border-black rounded-tr-2xl rounded shadow-[4px_4px_0px_0px_rgba(0,128,128,1)]"
             onClick={() => setIsOpen(true)}
           >
             <Image
@@ -135,25 +134,31 @@ const SearchDrawer = () => {
           className="h-full top-0 left-0 w-[300px] rounded-none mt-0"
           onInteractOutside={() => setIsOpen(false)}
         >
-          <DrawerHeader className="text-left">
-            <DrawerTitle>Search Users</DrawerTitle>
-            <DrawerDescription>Chat with other user.</DrawerDescription>
+          <DrawerHeader className="text-left ">
+            <DrawerTitle className="border-b-2 w-fit border-teal-700 text-lg">
+              Search Users
+            </DrawerTitle>
+            <DrawerDescription className="border-b-2 w-fit border-teal-700 mt-2 text-base text-black">
+              Chat with other user.
+            </DrawerDescription>
           </DrawerHeader>
 
           <div className="p-4 flex">
             <input
               type="text"
               placeholder="Search by name or email"
-              className="w-full p-2 rounded-md mr-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)]"
-              onChange={(e) => setSearch(e.target.value)}
+              className="w-full p-2 rounded-md mr-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,128,128,1)]"
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  handleSearch();
+                  handleSearch(e);
                 }
               }}
             />
             <button
-              className="text-white border-2 border-black rounded-full p-4 shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:bg-red-200"
+              className="text-white border-2 border-black rounded-full p-4 shadow-[4px_4px_0px_0px_rgba(0,128,128,1)] hover:bg-teal-700"
               onClick={handleSearch}
             >
               <Image
@@ -167,7 +172,7 @@ const SearchDrawer = () => {
           {loading ? (
             <ChatLoading />
           ) : (
-            <div className="overflow-y-auto px-6 max-h-[calc(100vh-200px)]">
+            <div className="overflow-y-auto  px-6 max-h-[calc(100vh-200px)]">
               {searchResult.map((user) => (
                 <UserListItem
                   key={user._id}

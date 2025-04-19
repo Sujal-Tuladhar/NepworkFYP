@@ -5,7 +5,7 @@ const UserListItem = ({ user, handleFunction }) => {
   return (
     <div
       onClick={handleFunction}
-      className="flex items-center gap-2 mb-2 p-2 hover:bg-gray-100 cursor-pointer border-2 rounded-tr-2xl rounded-bl-2xl border-black"
+      className="flex items-center gap-2 mb-2 p-2 hover:bg-gray-100 cursor-pointer border-2 rounded-tr-2xl rounded-bl-2xl border-black shadow-[4px_4px_0px_0px_rgba(0,128,128,1)]"
     >
       <div className="w-10 h-10 rounded-full overflow-hidden relative">
         <Image

@@ -165,7 +165,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </button>
 
               {/* Chat title - centered */}
-              <h2 className="flex-1 text-center text-xl md:text-2xl font-semibold text-gray-800 truncate">
+              <h2 className="flex-1 text-center text-xl md:text-2xl font-semibold text-gray-800 border-b-2 border-black  p-2 truncate ">
                 {!selectedChat.isGroupChat ? (
                   getSender(user, selectedChat?.users)
                 ) : (
