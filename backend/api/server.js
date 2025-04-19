@@ -15,13 +15,19 @@ import chats from "./utils/data.js";
 import chatRoutes from "./routes/chat.route.js";
 import messageRoutes from "./routes/message.route.js";
 import escrowRoutes from "./routes/escrow.route.js";
+import projectRoutes from "./routes/project.route.js";
 import { Server } from "socket.io";
 import http from "http";
 
 dotenv.config();
 const app = express();
 //Conencting Frontend to backend #Credinatial true allows to send the cookies,tokens
-app.use(cors({ origin: ["http://localhost:3000", "http://localhost:3001"], credentials: true }));
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:3001"],
+    credentials: true,
+  })
+);
 // Parses JSON request bodies into req.body.
 app.use(express.json());
 // Parses cookies into req.cookies.
@@ -74,6 +80,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 
 app.use("/api/escrow", escrowRoutes);
+
+app.use("/api/project", projectRoutes);
 
 // app.get("/api/chat", (req, res) => {
 //   res.send(chats);
