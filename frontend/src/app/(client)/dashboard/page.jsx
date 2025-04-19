@@ -10,6 +10,7 @@ const Dashboard = () => {
   const { isLoggedIn } = useAuth();
   const [user, setUser] = useState(null);
   const [gigs, setGigs] = useState([]);
+  const [userGigs, setUserGigs] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
@@ -53,7 +54,6 @@ const Dashboard = () => {
         );
 
         if (!userResponse.ok) {
-          // If token is invalid, clear it and redirect to login
           localStorage.removeItem("currentUser");
           router.push("/login");
           return;
@@ -63,9 +63,7 @@ const Dashboard = () => {
         setUser(userData);
         setAuthChecked(true);
 
-        // Fetch data based on user type
         if (userData.isSeller) {
-          // Fetch gigs for sellers
           const gigsResponse = await fetch(
             "http://localhost:7700/api/gig/getGigs",
             {
@@ -78,13 +76,17 @@ const Dashboard = () => {
           if (!gigsResponse.ok) throw new Error("Failed to fetch gigs");
           const gigsData = await gigsResponse.json();
           setGigs(gigsData.gigs || []);
+          setUserGigs(
+            gigsData.gigs.filter(
+              (gig) => gig.userId?._id?.toString() === userData._id?.toString()
+            )
+          );
           setPagination({
             page: gigsData.pagination.page,
             total: gigsData.pagination.total,
             pages: gigsData.pagination.pages,
           });
         } else {
-          // Fetch orders for buyers
           const ordersResponse = await fetch(
             "http://localhost:7700/api/order/getOrder",
             {
@@ -101,7 +103,6 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error:", error);
         toast.error("Failed to load dashboard data");
-        // If there's an error, clear token and redirect to login
         localStorage.removeItem("currentUser");
         router.push("/login");
       } finally {
@@ -112,7 +113,6 @@ const Dashboard = () => {
     checkAuth();
   }, [router]);
 
-  // Show loading state while checking authentication
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -121,16 +121,9 @@ const Dashboard = () => {
     );
   }
 
-  // Only render the dashboard content after authentication is confirmed
   if (!authChecked) {
     return null;
   }
-
-  const userGigs = gigs.filter((gig) => {
-    console.log("User ID:", user?._id);
-    console.log("Gig User ID:", gig.userId?._id);
-    return gig.userId?._id?.toString() === user?._id?.toString();
-  });
 
   const handleEdit = (gig) => {
     setSelectedGig(gig);
@@ -176,6 +169,11 @@ const Dashboard = () => {
       setGigs((prevGigs) =>
         prevGigs.map((gig) => (gig._id === selectedGig._id ? updatedGig : gig))
       );
+      setUserGigs((prevUserGigs) =>
+        prevUserGigs.map((gig) =>
+          gig._id === selectedGig._id ? updatedGig : gig
+        )
+      );
       setShowEditDialog(false);
       toast.success("Gig updated successfully!");
     } catch (error) {
@@ -204,6 +202,9 @@ const Dashboard = () => {
       setGigs((prevGigs) =>
         prevGigs.filter((gig) => gig._id !== selectedGig._id)
       );
+      setUserGigs((prevUserGigs) =>
+        prevUserGigs.filter((gig) => gig._id !== selectedGig._id)
+      );
       setShowDeleteDialog(false);
       toast.success("Gig deleted successfully!");
     } catch (error) {
@@ -211,11 +212,13 @@ const Dashboard = () => {
       toast.error("Failed to delete gig");
     }
   };
-  console.log("Selected Gig:", selectedGig);
-  console.log(" 1234563424:", userGigs);
 
   return (
-    <div className="container mx-auto p-6">
+    <div
+      className={`container mx-auto p-6 ${
+        showEditDialog || showDeleteDialog ? "overflow-hidden h-screen" : ""
+      }`}
+    >
       {/* User Profile Section */}
       <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8">
         <div className="flex items-center gap-6">
@@ -264,8 +267,6 @@ const Dashboard = () => {
                   className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] flex-grow hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow"
                   onClick={() => router.push(`/gigs/${gig._id}`)}
                 >
-                  {console.log("Gig Details123:", gig)}
-
                   {gig.cover && (
                     <img
                       src={gig.cover}
@@ -302,7 +303,10 @@ const Dashboard = () => {
                   </div>
                   <div className="mt-4 flex justify-end gap-2">
                     <button
-                      onClick={() => handleEdit(gig)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(gig);
+                      }}
                       className="px-4 py-2 hover:bg-green-300 rounded-md border-2 border-black
                       shadow-[3px_3px_0_0_rgba(74,222,128)] hover:shadow-[3px_3px_0_0_rgba(34,197,94)]
                       active:translate-x-[1px] active:translate-y-[1px] active:shadow-none
@@ -311,7 +315,10 @@ const Dashboard = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(gig)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(gig);
+                      }}
                       className="px-4 py-2 hover:bg-red-300 rounded-md border-2 border-black
                       shadow-[3px_3px_0_0_rgba(239,68,68)] hover:shadow-[3px_3px_0_0_rgba(220,38,38)]
                       active:translate-x-[1px] active:translate-y-[1px] active:shadow-none
@@ -438,8 +445,8 @@ const Dashboard = () => {
 
       {/* Edit Dialog */}
       {showEditDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl my-8">
             <h2 className="text-2xl font-bold mb-4">Edit Gig</h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
@@ -623,8 +630,8 @@ const Dashboard = () => {
 
       {/* Delete Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md my-8">
             <h2 className="text-2xl font-bold mb-4">Delete Gig</h2>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this gig? This action cannot be

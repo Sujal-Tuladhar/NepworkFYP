@@ -57,16 +57,14 @@ function ContentPart() {
 
         {/* Right Section (Video) */}
         <div className="relative flex-1">
-          <div className="overflow-hidden rounded-xl shadow-lg">
-            <iframe
-              className="w-full h-96 rounded-xl"
-              width="720"
-              src="https://www.youtube.com/embed/GDlkCkcIqTs"
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+          <div className="overflow-hidden ">
+            <Image
+              src="/images/landing/content.png"
+              alt="video"
+              width={600}
+              height={400}
+              className="w-full h-auto object-cover"
+            />
           </div>
         </div>
       </div>

@@ -118,46 +118,6 @@ const OrdersPage = () => {
     setShowPaymentDialog(true);
   };
 
-  const handleKhaltiPayment = async (order) => {
-    try {
-      setPaymentLoading(true);
-      const token = localStorage.getItem("currentUser");
-      if (!token) {
-        toast.error("Please login to make payment");
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payment/initialize-khalti`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orderId: order._id,
-            website_url: window.location.origin,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to initialize payment");
-      }
-
-      // Redirect to Khalti payment page
-      window.location.href = data.paymentInitiate.payment_url;
-    } catch (error) {
-      console.error("Error initializing Khalti payment:", error);
-      toast.error(error.message || "Failed to initialize payment");
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
   const handlePaymentSuccess = (paymentId) => {
     setShowPaymentDialog(false);
     router.push(`/payment-success?payment_id=${paymentId}`);
@@ -295,12 +255,7 @@ const OrdersPage = () => {
                   >
                     Escrow Status
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Work Status
-                  </th>
+
                   <th
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -396,65 +351,20 @@ const OrdersPage = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Seller:</span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              order.sellerWorkStatus
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {order.sellerWorkStatus
-                              ? "Completed"
-                              : "In Progress"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Buyer:</span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              order.buyerWorkStatus
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {order.buyerWorkStatus
-                              ? "Completed"
-                              : "In Progress"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-2">
                         {!user?.isSeller && order.isPaid !== "completed" && (
                           <>
                             <button
                               onClick={() => handleStripePayment(order)}
                               disabled={paymentLoading}
-                              className={`w-full px-4 py-2 rounded ${
+                              className={`w-full px-4 py-2 rounded border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]   ${
                                 paymentLoading
                                   ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-green-500 hover:bg-green-600"
-                              } text-white`}
+                                  : " hover:bg-green-400 "
+                              } `}
                             >
                               {paymentLoading
                                 ? "Processing..."
                                 : "Pay with Stripe"}
-                            </button>
-                            <button
-                              onClick={() => handleKhaltiPayment(order)}
-                              disabled={paymentLoading}
-                              className={`w-full px-4 py-2 rounded ${
-                                paymentLoading
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : "bg-blue-500 hover:bg-blue-600"
-                              } text-white`}
-                            >
-                              {paymentLoading
-                                ? "Processing..."
-                                : "Pay with Khalti"}
                             </button>
                           </>
                         )}
@@ -479,7 +389,7 @@ const OrdersPage = () => {
                       <button
                         onClick={() => handleMessageClick(order)}
                         disabled={messageLoading}
-                        className="w-fit border-2 border-black text-white rounded-full p-3"
+                        className="w-fit border-2 border-black text-white rounded-full p-3 hover:bg-teal-400"
                       >
                         {messageLoading ? (
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
