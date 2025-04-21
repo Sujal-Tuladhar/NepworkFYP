@@ -6,9 +6,10 @@ const projectSchema = new Schema(
     clientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    budgetMin: Number,
-    budgetMax: Number,
-    category: String,
+    budgetMin: { type: Number, required: true },
+    budgetMax: { type: Number, required: true },
+    category: { type: String, required: true },
+    expectedDurationDays: { type: Number, required: true },
     attachments: [String], // optional file URLs
     status: {
       type: String,

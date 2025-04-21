@@ -193,10 +193,17 @@ const NavBar = () => {
                         className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
                         onClick={() => setShowDropdown(false)}
                       >
-                        Post To Bid
+                        Create a Bidding
                       </Link>
                     </div>
                   )}
+                  <Link
+                    href="/allBidPost"
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    All Bids
+                  </Link>
                   <Link
                     href="/message"
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors duration-150 border-b-2"

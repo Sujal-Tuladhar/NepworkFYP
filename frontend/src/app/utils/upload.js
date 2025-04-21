@@ -23,5 +23,4 @@ const upload = async (file) => {
     return null;
   }
 };
-
 export default upload;

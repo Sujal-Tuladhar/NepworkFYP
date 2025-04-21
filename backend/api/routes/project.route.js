@@ -5,31 +5,36 @@ import createError from "../utils/createError.js";
 
 const router = express.Router();
 
-/*  CREATE – POST /api/projects/createProject                   */
+/*  CREATE – POST /api/project/createProject                   */
 
-router.post(
-  "/createProject",
-  validate, // <-- your auth / JWT middleware
-  async (req, res, next) => {
-    try {
-      // Only buyers (non‑sellers) can create projects; tweak as needed.
-      if (req.user.isSeller) {
-        return next(createError(403, "Sellers cannot post projects"));
-      }
-
-      const newProject = new Project({
-        clientId: req.user._id,
-        ...req.body,
-      });
-
-      const savedProject = await newProject.save();
-      return res.status(201).json(savedProject);
-    } catch (err) {
-      console.error("Error in createProject:", err);
-      return res.status(500).json({ message: "Internal Server Error" });
+router.post("/createProject", validate, async (req, res, next) => {
+  console.log("Creating project with data:", req.body);
+  try {
+    // Only buyers (non‑sellers) can create projects
+    if (req.user.isSeller) {
+      return next(createError(403, "Sellers cannot post projects"));
     }
+
+    const newProject = new Project({
+      clientId: req.user._id,
+      title: req.body.title,
+      description: req.body.description,
+      budgetMin: req.body.budgetMin,
+      budgetMax: req.body.budgetMax,
+      category: req.body.category,
+      attachments: req.body.attachments || [],
+      expectedDurationDays: req.body.expectedDurationDays,
+      status: "open",
+    });
+
+    const savedProject = await newProject.save();
+    console.log("Project saved successfully:", savedProject);
+    return res.status(201).json(savedProject);
+  } catch (err) {
+    console.error("Error in createProject:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-);
+});
 
 /*  DELETE – DELETE /api/projects/deleteProject/:projectId      */
 
@@ -76,75 +81,89 @@ router.get(
   }
 );
 
-/* ------------------------------------------------------------ */
-/*  READ MANY – GET /api/projects/getProjects                   */
-/*  Query params:                                               */
-/*    minBudget, maxBudget, status, category, search, page,     */
-/*    limit, sortBy(newest|budgetAsc|budgetDesc)                */
-/* ------------------------------------------------------------ */
+/* GET /api/project/getProjects - Get all projects with filtering and sorting */
 router.get("/getProjects", validate, async (req, res, next) => {
   try {
     const {
-      minBudget,
-      maxBudget,
-      status,
-      category,
       search = "",
+      category = "",
+      minBudget = "",
+      maxBudget = "",
+      sortBy = "newest",
       page = 1,
-      limit = 12,
-      sortBy,
+      limit = 10,
     } = req.query;
 
-    /* ------------ build Mongo filter ------------- */
+    // Build query
     const query = {};
 
-    // Text search against title
+    // Search in title and description
     if (search) {
-      query.title = { $regex: search, $options: "i" };
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
-    // Budget range
+    // Filter by category
+    if (category) {
+      query.category = category;
+    }
+
+    // Filter by budget range
     if (minBudget || maxBudget) {
-      query.budgetMax = {}; // assume bidding up to max
+      query.budgetMax = {};
       if (minBudget) query.budgetMax.$gte = Number(minBudget);
       if (maxBudget) query.budgetMax.$lte = Number(maxBudget);
     }
 
-    // Status & category
-    if (status) query.status = status;
-    if (category) query.category = category;
-
-    /* ------------- sort options ------------------ */
-    let sort = { createdAt: -1 }; // default newest first
+    // Sort options
+    let sort = {};
     switch (sortBy) {
-      case "budgetAsc":
-        sort = { budgetMax: 1 };
+      case "newest":
+        sort = { createdAt: -1 };
         break;
-      case "budgetDesc":
+      case "oldest":
+        sort = { createdAt: 1 };
+        break;
+      case "budgetHigh":
         sort = { budgetMax: -1 };
         break;
-      case "newest":
+      case "budgetLow":
+        sort = { budgetMax: 1 };
+        break;
+      case "durationShort":
+        sort = { expectedDurationDays: 1 };
+        break;
+      case "durationLong":
+        sort = { expectedDurationDays: -1 };
+        break;
       default:
         sort = { createdAt: -1 };
     }
 
+    // Pagination
     const skip = (Number(page) - 1) * Number(limit);
 
+    // Get projects with filters
     const projects = await Project.find(query)
       .populate("clientId", "username profilePic country")
       .sort(sort)
       .skip(skip)
       .limit(Number(limit));
 
+    // Get total count for pagination
     const total = await Project.countDocuments(query);
+
+    // Get unique categories for filter options
+    const categories = await Project.distinct("category");
 
     return res.status(200).json({
       projects,
-      pagination: {
-        total,
-        page: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-      },
+      total,
+      pages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
+      categories,
     });
   } catch (err) {
     console.error("Error in getProjects:", err);
