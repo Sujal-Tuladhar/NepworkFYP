@@ -88,6 +88,7 @@ const StripePaymentForm = ({ order, onSuccess, onCancel }) => {
       <div className="border rounded-md p-4">
         <CardElement
           options={{
+            disabled: loading,
             style: {
               base: {
                 fontSize: "16px",

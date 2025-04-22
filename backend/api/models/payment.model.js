@@ -9,6 +9,8 @@ const paymentSchema = new mongoose.Schema(
     },
     pidx: {
       type: String,
+      default: null,
+      sparse: true,
       unique: true,
     },
     orderId: {

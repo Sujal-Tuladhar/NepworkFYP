@@ -169,7 +169,7 @@ const OrdersPage = () => {
       }
 
       // Redirect to chat page with the chat ID
-      router.push(`/message`);
+      router.push(`/chat/${data._id}`);
     } catch (error) {
       console.error("Error accessing chat:", error);
       toast.error(error.message || "Failed to access chat");
@@ -197,7 +197,7 @@ const OrdersPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
-        {user?.isSeller ? "Orders Received" : "My Gig Orders"}
+        {user?.isSeller ? "Orders Received" : "My Gigs Orders"}
       </h1>
 
       {orders.length === 0 ? (
@@ -255,13 +255,13 @@ const OrdersPage = () => {
                   >
                     Escrow Status
                   </th>
-
                   <th
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Actions
                   </th>
+
                   <th
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -352,30 +352,36 @@ const OrdersPage = () => {
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-2">
                         {!user?.isSeller && order.isPaid !== "completed" && (
-                          <>
-                            <button
-                              onClick={() => handleStripePayment(order)}
-                              disabled={paymentLoading}
-                              className={`w-full px-4 py-2 rounded border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]   ${
-                                paymentLoading
-                                  ? "bg-gray-300 cursor-not-allowed"
-                                  : " hover:bg-green-400 "
-                              } `}
-                            >
-                              {paymentLoading
-                                ? "Processing..."
-                                : "Pay with Stripe"}
-                            </button>
-                          </>
+                          <button
+                            onClick={() => handleStripePayment(order)}
+                            disabled={paymentLoading}
+                            className={`w-full px-4 py-2 rounded border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]  ${
+                              paymentLoading
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : " hover:bg-green-400 "
+                            } `}
+                          >
+                            {paymentLoading
+                              ? "Processing..."
+                              : "Pay with Stripe"}
+                          </button>
                         )}
                         {order.isPaid === "completed" && (
                           <WorkStatusButton
                             order={order}
                             isSeller={user?.isSeller}
                             onStatusUpdate={handleStatusUpdate}
+                            disabled={
+                              !user?.isSeller && !order.sellerWorkStatus
+                            }
+                            disabledMessage={
+                              !user?.isSeller && !order.sellerWorkStatus
+                                ? "Seller must complete work first"
+                                : ""
+                            }
                           />
                         )}
-                        {!user?.isSeller && (
+                        {!user?.isSeller && order.isPaid !== "completed" && (
                           <button
                             onClick={() => handleDeleteClick(order)}
                             className="w-full px-3 py-2 border-2 border-black  rounded shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:bg-red-300"

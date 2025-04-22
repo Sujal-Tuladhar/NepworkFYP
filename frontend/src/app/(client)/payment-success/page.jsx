@@ -11,6 +11,7 @@ export default function PaymentSuccess() {
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentDetails, setPaymentDetails] = useState(null);
   const searchParams = useSearchParams();
+  let retryCount = 0;
   const router = useRouter();
 
   useEffect(() => {
@@ -85,9 +86,13 @@ export default function PaymentSuccess() {
             router.push("/orders");
           }, 5000);
         } else if (data.status === "pending") {
-          toast.info("Payment is still processing. Please wait...");
-          // Check again after 5 seconds
-          setTimeout(verifyPayment, 5000);
+          if (retryCount < 5) {
+            retryCount++;
+            toast.info("Payment is still processing. Trying again...");
+            setTimeout(verifyPayment, 5000);
+          } else {
+            throw new Error("Payment still processing. Try again later.");
+          }
         } else {
           throw new Error(data.message || "Payment verification failed");
         }

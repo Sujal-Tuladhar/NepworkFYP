@@ -375,9 +375,15 @@ router.post("/verify-stripe", validate, async (req, res) => {
           orderId: payment.orderId,
         });
         if (existingEscrow) {
-          return res.status(400).json({
-            success: false,
-            message: "Escrow already exists for this order",
+          return res.json({
+            success: true,
+            status: "succeeded",
+            message: "Payment already verified and escrow exists.",
+            payment: {
+              ...payment.toObject(),
+              status: "success",
+              paymentConfirmation: true,
+            },
           });
         }
 

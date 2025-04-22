@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 
-const WorkStatusButton = ({ order, isSeller, onStatusUpdate }) => {
+const WorkStatusButton = ({
+  order,
+  isSeller,
+  onStatusUpdate,
+  disabled,
+  disabledMessage,
+}) => {
   const [loading, setLoading] = useState(false);
   const currentStatus = isSeller
     ? order.sellerWorkStatus
@@ -13,10 +19,15 @@ const WorkStatusButton = ({ order, isSeller, onStatusUpdate }) => {
     order.escrowId?.status === "waitingToRelease";
 
   // Disable the button if trying to mark as incomplete and escrow is released/waiting
-  const isDisabled = loading || (currentStatus && isEscrowReleased);
+  const isDisabled = loading || (currentStatus && isEscrowReleased) || disabled;
 
   const handleStatusUpdate = async () => {
     try {
+      if (disabled) {
+        toast.error(disabledMessage || "Cannot update status at this time");
+        return;
+      }
+
       setLoading(true);
       const token = localStorage.getItem("currentUser");
       const endpoint = isSeller
