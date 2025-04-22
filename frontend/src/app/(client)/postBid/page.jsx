@@ -19,6 +19,7 @@ const PostBid = () => {
     category: "",
     expectedDurationDays: "",
     attachments: [],
+    expiryDays: "7", // Default to 7 days
   });
 
   useEffect(() => {
@@ -250,17 +251,42 @@ const PostBid = () => {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             >
               <option value="">Select a category</option>
-              <option value="Web Design">Web Design</option>
-              <option value="Web Development">Web Development</option>
-              <option value="Mobile Development">Mobile Development</option>
-              <option value="UI/UX Design">UI/UX Design</option>
-              <option value="Content Writing">Content Writing</option>
+              <option value="web">Web Development</option>
+              <option value="mobile">Mobile Development</option>
+              <option value="design">Design</option>
+              <option value="writing">Writing</option>
+              <option value="marketing">Marketing</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Attachments
+              Bid Expiry Duration (Days)
+            </label>
+            <select
+              name="expiryDays"
+              value={formData.expiryDays}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+              <option value="1">1 Day</option>
+              <option value="2">2 Days</option>
+              <option value="3">3 Days</option>
+              <option value="4">4 Days</option>
+              <option value="5">5 Days</option>
+              <option value="6">6 Days</option>
+              <option value="7">7 Days</option>
+            </select>
+            <p className="mt-1 text-sm text-gray-500">
+              After this period, your bid will automatically expire if no offer
+              is selected
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Add File WIth More Information about the Project:
             </label>
             <input
               type="file"

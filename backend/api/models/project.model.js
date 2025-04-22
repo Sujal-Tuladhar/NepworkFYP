@@ -17,6 +17,7 @@ const projectSchema = new Schema(
       default: "open",
     },
     selectedBidId: { type: Schema.Types.ObjectId, ref: "Bid" },
+    expiryDate: { type: Date, required: true }, // New field for bid expiry
   },
   { timestamps: true }
 );
