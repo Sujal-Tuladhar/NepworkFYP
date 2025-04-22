@@ -197,7 +197,7 @@ const OrdersPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
-        {user?.isSeller ? "Orders Received" : "My Orders"}
+        {user?.isSeller ? "Orders Received" : "My Gig Orders"}
       </h1>
 
       {orders.length === 0 ? (

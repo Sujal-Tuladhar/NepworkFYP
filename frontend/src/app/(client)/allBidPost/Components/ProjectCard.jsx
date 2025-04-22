@@ -43,7 +43,7 @@ const ProjectCard = ({ project }) => {
           <div className="space-y-1">
             <p className="text-xs text-gray-500">Budget</p>
             <p className="text-sm font-medium text-gray-800">
-              ${project.budgetMin.toLocaleString()} - $
+              Rs {project.budgetMin.toLocaleString()} - Rs{" "}
               {project.budgetMax.toLocaleString()}
             </p>
           </div>

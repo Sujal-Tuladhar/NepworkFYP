@@ -15,6 +15,16 @@ router.post("/createProject", validate, async (req, res, next) => {
       return next(createError(403, "Sellers cannot post projects"));
     }
 
+    // Validate expiry days (1-7 days)
+    const expiryDays = parseInt(req.body.expiryDays);
+    if (isNaN(expiryDays) || expiryDays < 1 || expiryDays > 7) {
+      return next(createError(400, "Expiry days must be between 1 and 7"));
+    }
+
+    // Calculate expiry date
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + expiryDays);
+
     const newProject = new Project({
       clientId: req.user._id,
       title: req.body.title,
@@ -25,6 +35,7 @@ router.post("/createProject", validate, async (req, res, next) => {
       attachments: req.body.attachments || [],
       expectedDurationDays: req.body.expectedDurationDays,
       status: "open",
+      expiryDate: expiryDate,
     });
 
     const savedProject = await newProject.save();
@@ -94,8 +105,18 @@ router.get("/getProjects", validate, async (req, res, next) => {
       limit = 10,
     } = req.query;
 
+    // Check and update expired projects
+    const now = new Date();
+    await Project.updateMany(
+      {
+        status: "open",
+        expiryDate: { $lt: now },
+      },
+      { $set: { status: "cancelled" } }
+    );
+
     // Build query
-    const query = {};
+    const query = { status: "open" }; // Only show open projects
 
     // Search in title and description
     if (search) {

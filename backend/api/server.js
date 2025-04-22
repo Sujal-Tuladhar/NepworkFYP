@@ -17,6 +17,7 @@ import messageRoutes from "./routes/message.route.js";
 import escrowRoutes from "./routes/escrow.route.js";
 import projectRoutes from "./routes/project.route.js";
 import { Server } from "socket.io";
+import bidRoutes from "./routes/bid.route.js";
 import http from "http";
 
 dotenv.config();
@@ -82,6 +83,8 @@ app.use("/api/message", messageRoutes);
 app.use("/api/escrow", escrowRoutes);
 
 app.use("/api/project", projectRoutes);
+
+app.use("/api/bid", bidRoutes);
 
 // app.get("/api/chat", (req, res) => {
 //   res.send(chats);
