@@ -46,7 +46,7 @@ const paymentSchema = new mongoose.Schema(
     paymentGateway: {
       type: String,
       enum: ["khalti", "stripe"],
-      default: "khalti", // Khalti is set as the default payment gateway
+      default: "stripe",
       required: true,
     },
     status: {

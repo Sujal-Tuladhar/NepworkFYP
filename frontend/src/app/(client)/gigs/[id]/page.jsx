@@ -265,7 +265,7 @@ const GigDetails = () => {
           body: JSON.stringify({
             gigId: gig._id,
             price: gig.price,
-            paymentMethod: "khalti",
+            paymentMethod: "stripe",
             isPaid: "pending",
           }),
         }

@@ -10,7 +10,7 @@ const orderSchema = new Schema(
     price: { type: Number, required: true },
     sellerWorkStatus: { type: Boolean, default: false },
     buyerWorkStatus: { type: Boolean, default: false },
-    paymentMethod: { type: String, enum: ["khalti", "stripe"], required: true },
+    paymentMethod: { type: String, enum: ["stripe"], required: true },
     isPaid: {
       type: String,
       enum: ["pending", "completed", "refunded"],
