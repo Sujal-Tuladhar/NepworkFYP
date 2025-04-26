@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import {
+  ArrowDownTrayIcon,
+  CheckBadgeIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
 interface Escrow {
   _id: string;
@@ -51,44 +56,44 @@ export default function Payouts() {
   const [escrows, setEscrows] = useState<Escrow[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
   const router = useRouter();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const accessToken = Cookies.get('accessToken');
+      const accessToken = Cookies.get("accessToken");
       if (!accessToken) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
 
       const [escrowsRes, payoutsRes] = await Promise.all([
-        axios.get('http://localhost:7700/api/escrow/waiting-for-release', {
+        axios.get("http://localhost:7700/api/escrow/waiting-for-release", {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
         }),
-        axios.get('http://localhost:7700/api/escrow/payouts', {
+        axios.get("http://localhost:7700/api/escrow/payouts", {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        })
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }),
       ]);
 
       setEscrows(escrowsRes.data);
       setPayouts(payoutsRes.data);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error("Error fetching data:", err);
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        Cookies.remove('accessToken');
-        localStorage.removeItem('adminUser');
-        router.push('/login');
+        Cookies.remove("accessToken");
+        localStorage.removeItem("adminUser");
+        router.push("/login");
       } else {
-        setError('Failed to load data');
+        setError("Failed to load data");
       }
     } finally {
       setLoading(false);
@@ -101,9 +106,9 @@ export default function Payouts() {
 
   const handleReleaseEscrow = async (escrowId: string) => {
     try {
-      const accessToken = Cookies.get('accessToken');
+      const accessToken = Cookies.get("accessToken");
       if (!accessToken) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
 
@@ -112,145 +117,174 @@ export default function Payouts() {
         {},
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
       fetchData();
     } catch (err) {
-      console.error('Error releasing escrow:', err);
-      setError('Failed to release escrow');
+      console.error("Error releasing escrow:", err);
+      setError("Failed to release escrow");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Payout Management</h1>
-        <div className="flex space-x-4">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-2xl font-bold">Payout Management</h1>
+        <div className="flex space-x-2">
           <button
-            onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 rounded-md ${
-              activeTab === 'pending'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => setActiveTab("pending")}
+            className={`px-4 py-2 border-2 rounded-lg ${
+              activeTab === "pending"
+                ? "border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+                : "border-gray-300 bg-gray-100 text-gray-700"
             }`}
           >
-            Pending Releases
+            <div className="flex items-center gap-2">
+              <ClockIcon className="w-5 h-5" />
+              <span>Pending Releases</span>
+            </div>
           </button>
           <button
-            onClick={() => setActiveTab('history')}
-            className={`px-4 py-2 rounded-md ${
-              activeTab === 'history'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-2 border-2 rounded-lg ${
+              activeTab === "history"
+                ? "border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(34,197,94,1)]"
+                : "border-gray-300 bg-gray-100 text-gray-700"
             }`}
           >
-            Payout History
+            <div className="flex items-center gap-2">
+              <CheckBadgeIcon className="w-5 h-5" />
+              <span>Payout History</span>
+            </div>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm font-medium text-red-700">{error}</p>
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'pending' ? (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      {activeTab === "pending" ? (
+        <div className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] overflow-hidden">
           <ul className="divide-y divide-gray-200">
-            {escrows.map((escrow) => (
-              <li key={escrow._id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-indigo-600 truncate">
-                      Order #{escrow.orderId._id.slice(-6)}
+            {escrows.length > 0 ? (
+              escrows.map((escrow) => (
+                <li key={escrow._id} className="p-4 hover:bg-gray-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">
+                          Order #{escrow.orderId._id.slice(-6)}
+                        </h3>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                          Pending
+                        </span>
+                      </div>
+                      <div className="mt-2 text-sm">
+                        <p className="text-gray-600">
+                          <span className="font-medium">Amount:</span> $
+                          {escrow.orderId.price}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Seller:</span>{" "}
+                          {escrow.orderId.sellerId.username} (
+                          {escrow.orderId.sellerId.email})
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Buyer:</span>{" "}
+                          {escrow.orderId.buyerId.username} (
+                          {escrow.orderId.buyerId.email})
+                        </p>
+                      </div>
                     </div>
-                    <div className="mt-2 flex items-center text-sm text-gray-500">
-                      <span>Amount: ${escrow.orderId.price}</span>
-                    </div>
-                  </div>
-                  <div className="ml-4 flex-shrink-0">
                     <button
                       onClick={() => handleReleaseEscrow(escrow._id)}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="px-4 py-2 bg-white border-2 border-black font-semibold hover:bg-green-300 transition-colors shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] flex items-center gap-2"
                     >
+                      <ArrowDownTrayIcon className="w-5 h-5" />
                       Release Escrow
                     </button>
                   </div>
-                </div>
-                <div className="mt-2">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Seller: {escrow.orderId.sellerId.username} ({escrow.orderId.sellerId.email})</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Buyer: {escrow.orderId.buyerId.username} ({escrow.orderId.buyerId.email})</span>
-                  </div>
-                </div>
+                </li>
+              ))
+            ) : (
+              <li className="p-4 text-center text-gray-500">
+                No pending escrows to release
               </li>
-            ))}
+            )}
           </ul>
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <div className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] overflow-hidden">
           <ul className="divide-y divide-gray-200">
-            {payouts.map((payout) => (
-              <li key={payout._id} className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-indigo-600 truncate">
-                      Payout #{payout._id.slice(-6)}
+            {payouts.length > 0 ? (
+              payouts.map((payout) => (
+                <li key={payout._id} className="p-4 hover:bg-gray-50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">
+                          Payout #{payout._id.slice(-6)}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            payout.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {payout.status}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-sm">
+                        <p className="text-gray-600">
+                          <span className="font-medium">Amount:</span> $
+                          {payout.amount}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Seller:</span>{" "}
+                          {payout.sellerId.username} ({payout.sellerId.email})
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Buyer:</span>{" "}
+                          {payout.buyerId.username} ({payout.buyerId.email})
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Released by:</span>{" "}
+                          {payout.releasedBy.username} on{" "}
+                          {new Date(payout.releaseDate).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="mt-2 flex items-center text-sm text-gray-500">
-                      <span>Amount: ${payout.amount}</span>
-                    </div>
                   </div>
-                  <div className="ml-4 flex-shrink-0">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      payout.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {payout.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Seller: {payout.sellerId.username} ({payout.sellerId.email})</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Buyer: {payout.buyerId.username} ({payout.buyerId.email})</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Released by: {payout.releasedBy.username} on {new Date(payout.releaseDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
+                </li>
+              ))
+            ) : (
+              <li className="p-4 text-center text-gray-500">
+                No payout history available
               </li>
-            ))}
+            )}
           </ul>
         </div>
       )}
     </div>
   );
-} 
+}

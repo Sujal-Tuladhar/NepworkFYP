@@ -1,71 +1,70 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import axios, { AxiosError } from 'axios';
-import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { useState, useEffect } from "react";
+import axios, { AxiosError } from "axios";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { LockClosedIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Check if already logged in
-    const token = Cookies.get('accessToken');
+    const token = Cookies.get("accessToken");
     if (token) {
-      router.push('/admin');
+      router.push("/admin");
     }
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
-      const res = await axios.post('http://localhost:7700/api/auth/admin/login', {
-        email,
-        password
-      });
+      const res = await axios.post(
+        "http://localhost:7700/api/auth/admin/login",
+        {
+          email,
+          password,
+        }
+      );
 
-      console.log('Login response:', res.data);
-
-      if (res.data && res.data.accessToken) {
-        // Set the access token in cookies
-        Cookies.set('accessToken', res.data.accessToken, { 
-          expires: 7, // 7 days
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict'
+      if (res.data?.accessToken) {
+        Cookies.set("accessToken", res.data.accessToken, {
+          expires: 7,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
         });
 
-        // Store admin user info in localStorage
-        localStorage.setItem('adminUser', JSON.stringify({
-          id: res.data._id,
-          email: res.data.email,
-          name: res.data.username,
-          accessToken: res.data.accessToken
-        }));
+        localStorage.setItem(
+          "adminUser",
+          JSON.stringify({
+            id: res.data._id,
+            email: res.data.email,
+            name: res.data.username,
+            accessToken: res.data.accessToken,
+          })
+        );
 
-        // Redirect to admin dashboard
-        router.push('/admin');
+        router.push("/admin");
       } else {
-        console.error('Invalid response format:', res.data);
-        setError('Invalid response from server');
+        setError("Invalid response from server");
       }
     } catch (err) {
       const error = err as AxiosError;
-      console.error('Login error:', error.response?.data);
       if (error.response?.status === 403) {
-        setError('You are not authorized as an admin');
+        setError("You are not authorized as an admin");
       } else if (error.response?.status === 401) {
-        setError('Invalid credentials');
+        setError("Invalid credentials");
       } else if (error.response?.status === 404) {
-        setError('User not found');
+        setError("User not found");
       } else {
-        setError('Login failed. Please try again.');
+        setError("Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -73,69 +72,90 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Admin Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please sign in with your admin credentials
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white p-8 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Portal</h1>
+          <p className="mt-2 text-gray-600">
+            Enter your credentials to continue
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700">
+            <p>{error}</p>
+          </div>
+        )}
+
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                className="block w-full pl-10 p-2 border-2 border-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="admin@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
+          </div>
+
+          <div className="space-y-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <LockClosedIcon className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="block w-full pl-10 p-2 border-2 border-black rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-center text-sm">
-              {error}
-            </div>
-          )}
-
           <div>
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+              className={`w-full py-3 px-4 border-2 border-black rounded-lg font-semibold flex items-center justify-center gap-2 ${
+                loading
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-white text-black hover:bg-blue-300 shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+              }`}
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? (
+                <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-black"></span>
+              ) : (
+                <LockClosedIcon className="h-5 w-5" />
+              )}
+              <span>{loading ? "Signing in..." : "Sign in"}</span>
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

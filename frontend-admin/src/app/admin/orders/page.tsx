@@ -3,6 +3,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Order {
   _id: string;
@@ -26,8 +39,18 @@ interface OrdersResponse {
   totalPages: number;
 }
 
+interface OrderStats {
+  totalOrders: number;
+  totalRevenue: number;
+  statusDistribution: { status: string; count: number }[];
+  monthlyRevenue: { month: string; revenue: number }[];
+}
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -49,20 +72,63 @@ export default function Orders() {
         return;
       }
 
-      const res = await axios.get(
-        `http://localhost:7700/api/admin/orders?page=${page}&search=${searchQuery}`,
-        {
+      const [ordersRes, statsRes] = await Promise.all([
+        axios.get(
+          `http://localhost:7700/api/admin/orders?page=${page}&search=${searchQuery}`,
+          {
+            headers: {
+              Authorization: `Bearer ${adminUser.accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        axios.get(`http://localhost:7700/api/admin/stats`, {
           headers: {
             Authorization: `Bearer ${adminUser.accessToken}`,
             "Content-Type": "application/json",
           },
-        }
-      );
+        }),
+      ]);
 
-      const data: OrdersResponse = res.data;
+      const data: OrdersResponse = ordersRes.data;
       setOrders(data.orders);
       setTotalPages(data.totalPages);
       setCurrentPage(data.currentPage);
+      setStats({
+        totalOrders: statsRes.data.totalOrders,
+        totalRevenue: statsRes.data.totalRevenue,
+        statusDistribution: [
+          {
+            status: "completed",
+            count:
+              statsRes.data.totalOrders -
+              statsRes.data.recentOrders.filter(
+                (o: any) => o.status !== "completed"
+              ).length,
+          },
+          {
+            status: "pending",
+            count: statsRes.data.recentOrders.filter(
+              (o: any) => o.status === "pending"
+            ).length,
+          },
+          {
+            status: "cancelled",
+            count: statsRes.data.recentOrders.filter(
+              (o: any) => o.status === "cancelled"
+            ).length,
+          },
+        ],
+        monthlyRevenue: Array(6)
+          .fill(0)
+          .map((_, i) => ({
+            month: new Date(
+              new Date().setMonth(new Date().getMonth() - i)
+            ).toLocaleString("default", { month: "short" }),
+            revenue: Math.floor(Math.random() * 10000) + 1000, // Mock data - replace with actual from backend
+          }))
+          .reverse(),
+      });
       setLoading(false);
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -87,23 +153,23 @@ export default function Orders() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-        <div className="relative">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-2xl font-bold">Orders Management</h1>
+        <div className="relative w-full md:w-64">
           <input
             type="text"
             placeholder="Search orders..."
             value={search}
             onChange={handleSearch}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full p-2 border-2 border-black rounded-lg pl-10"
           />
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg
@@ -124,70 +190,78 @@ export default function Orders() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 p-4">
           <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm font-medium text-red-700">{error}</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      {/* Stats and Charts Section */}
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Summary Stats */}
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border-2 border-black rounded-lg">
+                <h3 className="text-sm font-medium">Total Orders</h3>
+                <p className="text-2xl font-bold">{stats.totalOrders}</p>
+              </div>
+              <div className="p-4 border-2 border-black rounded-lg">
+                <h3 className="text-sm font-medium">Total Revenue</h3>
+                <p className="text-2xl font-bold">
+                  ${stats.totalRevenue.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Distribution Pie Chart */}
+
+          {/* Monthly Revenue Bar Chart */}
+        </div>
+      )}
+
+      {/* Orders List */}
+      <div className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] overflow-hidden">
         <ul className="divide-y divide-gray-200">
           {orders.map((order) => (
-            <li key={order._id}>
-              <div className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="text-sm font-medium text-indigo-600">
+            <li key={order._id} className="p-4 hover:bg-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">
                       Order #{order._id.slice(-6)}
-                    </div>
-                    <div className="ml-2 flex-shrink-0 flex">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          order.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="ml-2 flex-shrink-0 flex">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      ${order.price}
+                    </h3>
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        order.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {order.status}
                     </span>
                   </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {order.buyerId.username} ({order.buyerId.email})
+                  </p>
                 </div>
-                <div className="mt-2 sm:flex sm:justify-between">
-                  <div className="sm:flex">
-                    <div className="flex items-center text-sm text-gray-500">
-                      {order.buyerId.username} ({order.buyerId.email})
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                    <span>
-                      {order.gigId.title} •{" "}
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+                <div className="flex flex-col sm:items-end">
+                  <span className="px-2 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                    ${order.price}
+                  </span>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {order.gigId.title}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </li>
@@ -196,23 +270,29 @@ export default function Orders() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center">
-        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <div className="flex space-x-2">
             <button
-              key={page}
-              onClick={() => fetchOrders(page, search)}
-              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                currentPage === page
-                  ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
-                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-              }`}
+              onClick={() => fetchOrders(currentPage - 1, search)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border-2 border-black rounded-lg disabled:opacity-50"
             >
-              {page}
+              Previous
             </button>
-          ))}
-        </nav>
-      </div>
+            <span className="px-4 py-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => fetchOrders(currentPage + 1, search)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border-2 border-black rounded-lg disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
