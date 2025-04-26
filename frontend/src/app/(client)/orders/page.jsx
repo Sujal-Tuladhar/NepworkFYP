@@ -69,8 +69,16 @@ const OrdersPage = () => {
       const gigOrdersData = await gigOrdersResponse.json();
       const bidOrdersData = await bidOrdersResponse.json();
 
-      setOrders(gigOrdersData.data || []);
-      setBidOrders(bidOrdersData.data || []);
+      // Filter orders based on their type
+      const gigOrders = (gigOrdersData.data || []).filter(
+        (order) => order.gigId
+      );
+      const projectOrders = (bidOrdersData.data || []).filter(
+        (order) => order.projectId
+      );
+
+      setOrders(gigOrders);
+      setBidOrders(projectOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast.error("Failed to load orders");

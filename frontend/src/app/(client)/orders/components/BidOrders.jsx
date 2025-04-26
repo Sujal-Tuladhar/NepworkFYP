@@ -24,6 +24,9 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  // Filter out any non-project orders
+  const projectOrders = orders.filter((order) => order.projectId);
+
   const handleMessageClick = async (order) => {
     try {
       const token = localStorage.getItem("currentUser");
@@ -111,7 +114,7 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {orders.map((order) => (
+            {projectOrders.map((order) => (
               <tr
                 key={order._id}
                 className="hover:bg-gray-50 transition-colors"
@@ -195,7 +198,7 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
                   {!isSeller && order.isPaid === "pending" && (
                     <Button
                       onClick={() => handlePay(order)}
-                      className="w-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] hover:bg-green-400 transition-all"
+                      className="w-full border-2 border-black bg-transparent text-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] hover:bg-green-400 transition-all"
                     >
                       Pay Now
                     </Button>
