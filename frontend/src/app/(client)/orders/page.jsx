@@ -9,6 +9,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "@/components/StripePaymentForm";
 import WorkStatusButton from "@/components/WorkStatusButton";
 import Image from "next/image";
+import BidOrders from "./components/BidOrders";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -18,6 +19,7 @@ const OrdersPage = () => {
   const { isLoggedIn, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState([]);
+  const [bidOrders, setBidOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -47,18 +49,28 @@ const OrdersPage = () => {
       const token = localStorage.getItem("currentUser");
       if (!token) return;
 
-      const response = await fetch("http://localhost:7700/api/order/getOrder", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const [gigOrdersResponse, bidOrdersResponse] = await Promise.all([
+        fetch("http://localhost:7700/api/order/getOrder", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch("http://localhost:7700/api/order/getBidOrders", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
 
-      if (!response.ok) {
+      if (!gigOrdersResponse.ok || !bidOrdersResponse.ok) {
         throw new Error("Failed to fetch orders");
       }
 
-      const data = await response.json();
-      setOrders(data.data || []);
+      const gigOrdersData = await gigOrdersResponse.json();
+      const bidOrdersData = await bidOrdersResponse.json();
+
+      setOrders(gigOrdersData.data || []);
+      setBidOrders(bidOrdersData.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast.error("Failed to load orders");
@@ -197,30 +209,34 @@ const OrdersPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
-        {user?.isSeller ? "Orders Received" : "My Gigs Orders"}
+        {user?.isSeller ? "Orders Received" : "My Orders"}
       </h1>
 
+      {/* Gig Orders Section */}
+      <h2 className="text-2xl font-semibold mb-4">Gig Orders</h2>
       {orders.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-2">
-            {user?.isSeller ? "No orders received yet" : "No orders placed yet"}
+            {user?.isSeller
+              ? "No gig orders received yet"
+              : "No gig orders placed yet"}
           </h2>
           <p className="text-gray-600 mb-4">
             {user?.isSeller
-              ? "You haven't received any orders yet."
-              : "You haven't placed any orders yet."}
+              ? "You haven't received any gig orders yet."
+              : "You haven't placed any gig orders yet."}
           </p>
           {!user?.isSeller && (
             <Link
               href="/gigs"
-              className="mt-4 inline-block px-6 py-3 border-2 border-black  rounded  hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
+              className="mt-4 inline-block px-6 py-3 border-2 border-black rounded hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
             >
               Browse Gigs
             </Link>
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-black">
+        <div className="mb-12">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -415,6 +431,37 @@ const OrdersPage = () => {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Bid Orders Section */}
+      <h2 className="text-2xl font-semibold mb-4">Project Orders</h2>
+      {bidOrders.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">
+            {user?.isSeller
+              ? "No project orders received yet"
+              : "No project orders placed yet"}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {user?.isSeller
+              ? "You haven't received any project orders yet."
+              : "You haven't placed any project orders yet."}
+          </p>
+          {!user?.isSeller && (
+            <Link
+              href="/allBidPost"
+              className="mt-4 inline-block px-6 py-3 border-2 border-black rounded hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
+            >
+              Browse Projects
+            </Link>
+          )}
+        </div>
+      ) : (
+        <BidOrders
+          orders={bidOrders}
+          isSeller={user?.isSeller}
+          onStatusUpdate={handleStatusUpdate}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}

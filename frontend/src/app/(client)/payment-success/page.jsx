@@ -78,8 +78,11 @@ export default function PaymentSuccess() {
             paymentMethod: data.payment.paymentGateway,
             date: new Date(data.payment.createdAt).toLocaleString(),
             status: data.payment.status,
+            escrowId: data.payment.escrowId,
           });
-          toast.success("Payment successful! Your order has been confirmed.");
+          toast.success(
+            "Payment successful! Your order has been confirmed and escrow is activated."
+          );
 
           // Redirect to orders page after 5 seconds
           setTimeout(() => {
@@ -97,13 +100,8 @@ export default function PaymentSuccess() {
           throw new Error(data.message || "Payment verification failed");
         }
       } catch (error) {
-        console.error("Payment verification error:", error);
-        setErrorMessage(
-          error.message ||
-            "Failed to verify payment. Please contact support if this persists."
-        );
-        toast.error(error.message || "Failed to verify payment");
-      } finally {
+        console.error("Error verifying payment:", error);
+        setErrorMessage(error.message);
         setIsVerifying(false);
       }
     };

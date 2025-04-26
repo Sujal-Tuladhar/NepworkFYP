@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { Toaster, toast } from "sonner";
 import { useAuth } from "@/app/context/AuthContext";
@@ -13,10 +13,18 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import StripePaymentForm from "@/components/StripePaymentForm";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
 const ProjectDetails = () => {
   const { Id } = useParams();
   const { isLoggedIn, user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -30,6 +38,8 @@ const ProjectDetails = () => {
     deliveryDays: "",
     attachments: [],
   });
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -173,9 +183,15 @@ const ProjectDetails = () => {
   const handleConfirmOrder = async () => {
     try {
       const token = localStorage.getItem("currentUser");
-      const response = await axios.post(
-        `http://localhost:7700/api/bid/selectBid/${selectedBid._id}`,
-        {},
+
+      // First update the bid status to accepted and project status to awarded
+      const updateResponse = await axios.post(
+        "http://localhost:7700/api/bid/updateBidStatus",
+        {
+          bidId: selectedBid._id,
+          status: "accepted",
+          projectId: Id,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -183,26 +199,60 @@ const ProjectDetails = () => {
         }
       );
 
-      if (response.data) {
-        toast.success("Bid selected successfully!");
+      if (!updateResponse.data.success) {
+        throw new Error(
+          updateResponse.data.message || "Failed to update bid status"
+        );
+      }
+
+      // Then create the order
+      const orderResponse = await axios.post(
+        "http://localhost:7700/api/order/createProjectOrder",
+        {
+          projectId: Id,
+          bidId: selectedBid._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (orderResponse.data.success) {
         // Update the bids list to reflect the selected bid
         setBids(
           bids.map((bid) =>
-            bid._id === selectedBid._id ? { ...bid, status: "selected" } : bid
+            bid._id === selectedBid._id
+              ? { ...bid, status: "accepted" }
+              : { ...bid, status: "rejected" }
           )
         );
         // Update project status
-        setProject((prev) => ({ ...prev, status: "in-progress" }));
+        setProject((prev) => ({ ...prev, status: "awarded" }));
         setIsConfirmDialogOpen(false);
+
+        // Redirect to orders page
+        router.push("/orders");
       }
     } catch (error) {
-      console.error("Error selecting bid:", error);
+      console.error("Error creating order:", error);
       if (error.response) {
-        toast.error(error.response.data.message || "Failed to select bid");
+        toast.error(error.response.data.message || "Failed to create order");
       } else {
         toast.error("Something went wrong. Please try again.");
       }
     }
+  };
+
+  const handlePaymentSuccess = (paymentId) => {
+    setShowPaymentDialog(false);
+    router.push(`/payment-success?payment_id=${paymentId}`);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentDialog(false);
+    setSelectedOrder(null);
   };
 
   if (loading) {
@@ -524,6 +574,22 @@ const ProjectDetails = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Payment Dialog */}
+      {showPaymentDialog && selectedOrder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Complete Payment</h2>
+            <Elements stripe={stripePromise}>
+              <StripePaymentForm
+                order={selectedOrder}
+                onSuccess={handlePaymentSuccess}
+                onCancel={handlePaymentCancel}
+              />
+            </Elements>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

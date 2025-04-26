@@ -52,7 +52,7 @@ const PostBid = () => {
           toast.error(
             "Sellers cannot post projects. Please use a buyer account."
           );
-          router.push("/dashboard");
+          router.push("/allBidPost");
           return;
         }
       } catch (error) {
