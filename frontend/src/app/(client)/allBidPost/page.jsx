@@ -81,38 +81,36 @@ const AllBidPost = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <Toaster richColors position="top-right" />
 
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">All Projects</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">
+          All Bid Projects
+        </h1>
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        {/* Filters - Updated Design */}
+        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
+              <label className="block text-sm font-medium mb-1">Search</label>
               <input
                 type="text"
                 name="search"
                 value={filters.search}
                 onChange={handleFilterChange}
                 placeholder="Search projects..."
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
+              <label className="block text-sm font-medium mb-1">Category</label>
               <select
                 name="category"
                 value={filters.category}
                 onChange={handleFilterChange}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               >
                 <option value="">All Categories</option>
                 {categories.map((category) => (
@@ -124,7 +122,7 @@ const AllBidPost = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1">
                 Min Budget
               </label>
               <input
@@ -133,12 +131,12 @@ const AllBidPost = () => {
                 value={filters.minBudget}
                 onChange={handleFilterChange}
                 placeholder="Min budget"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1">
                 Max Budget
               </label>
               <input
@@ -147,19 +145,17 @@ const AllBidPost = () => {
                 value={filters.maxBudget}
                 onChange={handleFilterChange}
                 placeholder="Max budget"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
+              <label className="block text-sm font-medium mb-1">Sort By</label>
               <select
                 name="sortBy"
                 value={filters.sortBy}
                 onChange={handleFilterChange}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -172,33 +168,33 @@ const AllBidPost = () => {
           </div>
         </div>
 
-        {/* Projects Grid */}
+        {/* Projects Grid - Wrapper style updated */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <ProjectCard key={project._id} project={project} />
           ))}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Updated Design */}
         {pagination.pages > 1 && (
-          <div className="mt-8 flex justify-center">
-            <nav className="flex items-center space-x-2">
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 rounded-md ${
-                      page === pagination.currentPage
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
-            </nav>
+          <div className="mt-8 flex justify-center gap-2">
+            <button
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1}
+              className="px-4 py-2 border-2 border-black rounded-lg disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2">
+              Page {pagination.currentPage} of {pagination.pages}
+            </span>
+            <button
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.pages}
+              className="px-4 py-2 border-2 border-black rounded-lg disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

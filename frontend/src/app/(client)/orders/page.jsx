@@ -130,9 +130,11 @@ const OrdersPage = () => {
     setShowPaymentDialog(true);
   };
 
-  const handlePaymentSuccess = (paymentId) => {
+  const handlePaymentSuccess = (paymentIntentId) => {
     setShowPaymentDialog(false);
-    router.push(`/payment-success?payment_id=${paymentId}`);
+    setSelectedOrder(null);
+    // Redirect to payment success page with the payment intent ID
+    router.push(`/payment-success?payment_intent=${paymentIntentId}`);
   };
 
   const handlePaymentCancel = () => {

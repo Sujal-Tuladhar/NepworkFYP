@@ -33,33 +33,27 @@ export default function PaymentSuccess() {
         }
 
         let response;
+        let endpoint;
+        let body;
+
         if (paymentIntentId) {
           // Verify Stripe payment
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-stripe`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ paymentIntentId }),
-            }
-          );
-        } else if (pidx) {
+          endpoint = `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-stripe`;
+          body = { paymentIntentId };
+        } else {
           // Verify Khalti payment
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-khalti`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ pidx, transactionId }),
-            }
-          );
+          endpoint = `${process.env.NEXT_PUBLIC_API_URL}/payment/verify-khalti`;
+          body = { pidx, transactionId };
         }
+
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
 
         const data = await response.json();
         console.log("Verification response:", data);
@@ -70,6 +64,7 @@ export default function PaymentSuccess() {
 
         if (data.status === "succeeded" || data.status === "success") {
           setIsSuccess(true);
+          setIsVerifying(false);
           // Set payment details from the response
           setPaymentDetails({
             orderId: data.payment.orderId,

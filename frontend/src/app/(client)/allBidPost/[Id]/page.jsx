@@ -265,7 +265,7 @@ const ProjectDetails = () => {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-xl text-gray-600">Project not found</p>
       </div>
     );
@@ -278,18 +278,16 @@ const ProjectDetails = () => {
   const isExpired = timeRemaining <= 0;
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <Toaster richColors position="top-right" />
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Project Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Project Details Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
             <div className="flex justify-between items-start mb-4">
-              <h1 className="text-2xl font-bold text-gray-800">
-                {project.title}
-              </h1>
+              <h1 className="text-2xl font-bold">{project.title}</h1>
               {isExpired ? (
                 <span className="bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full">
                   Expired
@@ -307,7 +305,7 @@ const ProjectDetails = () => {
                   <h3 className="text-sm font-medium text-gray-500">
                     Budget Range
                   </h3>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-lg font-semibold">
                     Rs {project.budgetMin.toLocaleString()} - Rs{" "}
                     {project.budgetMax.toLocaleString()}
                   </p>
@@ -316,7 +314,7 @@ const ProjectDetails = () => {
                   <h3 className="text-sm font-medium text-gray-500">
                     Expected Duration
                   </h3>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-lg font-semibold">
                     {project.expectedDurationDays} days
                   </p>
                 </div>
@@ -324,9 +322,7 @@ const ProjectDetails = () => {
                   <h3 className="text-sm font-medium text-gray-500">
                     Category
                   </h3>
-                  <p className="text-lg font-semibold text-gray-800">
-                    {project.category}
-                  </p>
+                  <p className="text-lg font-semibold">{project.category}</p>
                 </div>
               </div>
 
@@ -334,9 +330,7 @@ const ProjectDetails = () => {
                 <h3 className="text-sm font-medium text-gray-500 mb-2">
                   Description
                 </h3>
-                <p className="text-gray-700 whitespace-pre-line">
-                  {project.description}
-                </p>
+                <p className="whitespace-pre-line">{project.description}</p>
               </div>
             </div>
 
@@ -352,11 +346,9 @@ const ProjectDetails = () => {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block p-3 border rounded-lg hover:bg-gray-50"
+                      className="block p-3 border-2 border-black rounded-lg hover:bg-gray-50"
                     >
-                      <p className="text-sm text-gray-600 truncate">
-                        Attachment {index + 1}
-                      </p>
+                      <p className="text-sm truncate">Attachment {index + 1}</p>
                     </a>
                   ))}
                 </div>
@@ -365,22 +357,22 @@ const ProjectDetails = () => {
           </div>
 
           {/* Buyer Details Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Buyer Information
-            </h2>
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+            <h2 className="text-xl font-bold mb-4">Buyer Information</h2>
             <div className="flex items-center space-x-4">
-              <img
-                src={project.clientId.profilePic}
-                alt={project.clientId.username}
-                className="w-16 h-16 rounded-full object-cover"
-              />
+              <div className="w-16 h-16 rounded-full border-2 border-black overflow-hidden">
+                <img
+                  src={project.clientId.profilePic}
+                  alt={project.clientId.username}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className="text-lg font-semibold">
                   {project.clientId.username}
                 </h3>
-                <p className="text-gray-600">{project.clientId.country}</p>
-                <p className="text-gray-600">{project.clientId.email}</p>
+                <p>{project.clientId.country}</p>
+                <p>{project.clientId.email}</p>
               </div>
             </div>
           </div>
@@ -390,13 +382,11 @@ const ProjectDetails = () => {
         <div className="space-y-6">
           {/* Bid Submission Form */}
           {user?.isSeller && !isExpired && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
-                Submit Your Bid
-              </h2>
+            <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+              <h2 className="text-xl font-bold mb-4">Submit Your Bid</h2>
               <form onSubmit={handleBidSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium mb-1">
                     Your Bid Amount (Rs)
                   </label>
                   <input
@@ -411,12 +401,12 @@ const ProjectDetails = () => {
                     required
                     min={project.budgetMin}
                     max={project.budgetMax}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium mb-1">
                     Delivery Time (Days)
                   </label>
                   <input
@@ -430,12 +420,12 @@ const ProjectDetails = () => {
                     }
                     required
                     min="1"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium mb-1">
                     Your Proposal
                   </label>
                   <textarea
@@ -448,31 +438,35 @@ const ProjectDetails = () => {
                     }
                     required
                     rows="4"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium mb-1">
                     Attachments (Optional)
                   </label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="mt-1 block w-full"
-                  />
-                  {uploading && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      Uploading files...
-                    </p>
-                  )}
+                  <div className="flex gap-4 items-center">
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="flex-1 p-2 border-2 border-black rounded-lg cursor-pointer text-center hover:bg-gray-50"
+                    >
+                      {uploading ? "Uploading..." : "Choose Files"}
+                    </label>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="w-full py-3 border-2 border-black font-semibold hover:bg-blue-300 transition-colors shadow-[4px_4px_0px_0px_rgba(59,130,246,1)] disabled:opacity-50"
                 >
                   {uploading ? "Submitting..." : "Submit Bid"}
                 </button>
@@ -481,30 +475,28 @@ const ProjectDetails = () => {
           )}
 
           {/* Existing Bids Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Existing Bids
-            </h2>
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+            <h2 className="text-xl font-bold mb-4">Existing Bids</h2>
             {bids.length === 0 ? (
-              <p className="text-gray-500 text-center">No bids yet</p>
+              <p className="text-center">No bids yet</p>
             ) : (
               <div className="space-y-4">
                 {bids.map((bid) => (
                   <div
                     key={bid._id}
-                    className={`border rounded-lg p-4 hover:bg-gray-50 ${
-                      bid.status === "selected"
-                        ? "bg-green-50 border-green-200"
-                        : ""
+                    className={`p-4 border-2 border-black rounded-lg ${
+                      bid.status === "selected" ? "bg-green-50" : ""
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
-                        <img
-                          src={bid.bidderId.profilePic}
-                          alt={bid.bidderId.username}
-                          className="w-8 h-8 rounded-full"
-                        />
+                        <div className="w-8 h-8 rounded-full border-2 border-black overflow-hidden">
+                          <img
+                            src={bid.bidderId.profilePic}
+                            alt={bid.bidderId.username}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                         <span className="font-medium">
                           {bid.bidderId.username}
                         </span>
@@ -518,22 +510,22 @@ const ProjectDetails = () => {
                           bid.status !== "selected" && (
                             <button
                               onClick={() => handleBidSelect(bid)}
-                              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                              className="px-4 py-2 bg-white border-2 border-black font-semibold hover:bg-green-300 transition-colors shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]"
                             >
                               Select Bid
                             </button>
                           )}
                         {bid.status === "selected" && (
-                          <span className="text-green-600 font-medium">
+                          <span className="font-medium text-green-600">
                             Selected
                           </span>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm mb-2">
                       Delivery in {bid.deliveryDays} days
                     </p>
-                    <p className="text-sm text-gray-700">{bid.proposal}</p>
+                    <p className="text-sm">{bid.proposal}</p>
                   </div>
                 ))}
               </div>
@@ -545,30 +537,34 @@ const ProjectDetails = () => {
             open={isConfirmDialogOpen}
             onOpenChange={setIsConfirmDialogOpen}
           >
-            <DialogContent>
+            <DialogContent className="border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
               <DialogHeader>
                 <DialogTitle>Confirm Bid Selection</DialogTitle>
               </DialogHeader>
               <div className="py-4">
-                <p className="text-gray-700">
+                <p>
                   Are you sure you want to select this bid from{" "}
                   {selectedBid?.bidderId?.username}?
                 </p>
-                <p className="mt-2 text-gray-600">
+                <p className="mt-2">
                   Amount: Rs {selectedBid?.amount?.toLocaleString()}
                 </p>
-                <p className="text-gray-600">
-                  Delivery Time: {selectedBid?.deliveryDays} days
-                </p>
+                <p>Delivery Time: {selectedBid?.deliveryDays} days</p>
               </div>
               <DialogFooter>
                 <Button
                   variant="outline"
                   onClick={() => setIsConfirmDialogOpen(false)}
+                  className="border-2 border-black"
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleConfirmOrder}>Confirm Selection</Button>
+                <Button
+                  onClick={handleConfirmOrder}
+                  className="bg-white text-black border-2 border-black hover:bg-green-300 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]"
+                >
+                  Confirm Selection
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -578,7 +574,7 @@ const ProjectDetails = () => {
       {/* Payment Dialog */}
       {showPaymentDialog && selectedOrder && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Complete Payment</h2>
             <Elements stripe={stripePromise}>
               <StripePaymentForm

@@ -160,30 +160,28 @@ const PostBid = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <Toaster richColors position="top-right" />
 
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
         <h1 className="text-2xl font-bold mb-6 text-center">
           Create New Project
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Title
-            </label>
+            <label className="block text-sm font-medium mb-1">Title</label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="w-full p-2 border-2 border-black rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium mb-1">
               Description
             </label>
             <textarea
@@ -192,13 +190,13 @@ const PostBid = () => {
               onChange={handleChange}
               required
               rows="4"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="w-full p-2 border-2 border-black rounded-lg"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium mb-1">
                 Minimum Budget
               </label>
               <input
@@ -207,11 +205,11 @@ const PostBid = () => {
                 value={formData.budgetMin}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium mb-1">
                 Maximum Budget
               </label>
               <input
@@ -220,13 +218,13 @@ const PostBid = () => {
                 value={formData.budgetMax}
                 onChange={handleChange}
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full p-2 border-2 border-black rounded-lg"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium mb-1">
               Expected Duration (Days)
             </label>
             <input
@@ -235,20 +233,18 @@ const PostBid = () => {
               value={formData.expectedDurationDays}
               onChange={handleChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="w-full p-2 border-2 border-black rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Category
-            </label>
+            <label className="block text-sm font-medium mb-1">Category</label>
             <select
               name="category"
               value={formData.category}
               onChange={handleChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="w-full p-2 border-2 border-black rounded-lg"
             >
               <option value="">Select a category</option>
               <option value="web">Web Development</option>
@@ -260,7 +256,7 @@ const PostBid = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium mb-1">
               Bid Expiry Duration (Days)
             </label>
             <select
@@ -268,7 +264,7 @@ const PostBid = () => {
               value={formData.expiryDays}
               onChange={handleChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="w-full p-2 border-2 border-black rounded-lg"
             >
               <option value="1">1 Day</option>
               <option value="2">2 Days</option>
@@ -285,28 +281,44 @@ const PostBid = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Add File WIth More Information about the Project:
+            <label className="block text-sm font-medium mb-1">
+              Add File With More Information about the Project:
             </label>
-            <input
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="mt-1 block w-full"
-              accept="image/*"
-            />
-            {uploading && (
-              <div className="mt-2 text-sm text-gray-500">
-                Uploading files...
-              </div>
-            )}
+            <div className="flex gap-4 items-center">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
+                accept="image/*"
+              />
+              <label
+                htmlFor="file-upload"
+                className="flex-1 p-2 border-2 border-black rounded-lg cursor-pointer text-center hover:bg-gray-50"
+              >
+                {uploading ? "Uploading..." : "Choose Files"}
+              </label>
+            </div>
             {formData.attachments.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-500">Uploaded files:</p>
-                <ul className="mt-1 space-y-1">
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium">Uploaded files:</p>
+                <ul className="space-y-1">
                   {formData.attachments.map((url, index) => (
-                    <li key={index} className="text-sm text-indigo-600">
-                      <a href={url} target="_blank" rel="noopener noreferrer">
+                    <li key={index} className="flex items-center gap-2">
+                      <div className="w-8 h-8 border-2 border-black rounded-lg overflow-hidden">
+                        <img
+                          src={url}
+                          alt={`Attachment ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm hover:underline"
+                      >
                         File {index + 1}
                       </a>
                     </li>
@@ -318,7 +330,7 @@ const PostBid = () => {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="w-full py-3 border-2 border-black font-semibold hover:bg-blue-300 transition-colors shadow-[4px_4px_0px_0px_rgba(59,130,246,1)] disabled:opacity-50"
             disabled={uploading}
           >
             {uploading ? "Uploading..." : "Create Project"}
