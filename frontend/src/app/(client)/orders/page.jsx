@@ -192,105 +192,70 @@ const OrdersPage = () => {
     }
   };
 
-  // Show loading state while auth is loading
-  if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-      </div>
-    );
-  }
-
-  // Don't render anything if not logged in
-  // The useEffect will handle the redirect
-  if (!isLoggedIn) {
-    return null;
-  }
-
-  // Table view for both sellers and buyers
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8 border-b-2 border-black pb-4">
         {user?.isSeller ? "Orders Received" : "My Orders"}
       </h1>
 
       {/* Gig Orders Section */}
-      <h2 className="text-2xl font-semibold mb-4">Gig Orders</h2>
-      {orders.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-2">
-            {user?.isSeller
-              ? "No gig orders received yet"
-              : "No gig orders placed yet"}
-          </h2>
-          <p className="text-gray-600 mb-4">
-            {user?.isSeller
-              ? "You haven't received any gig orders yet."
-              : "You haven't placed any gig orders yet."}
-          </p>
-          {!user?.isSeller && (
-            <Link
-              href="/gigs"
-              className="mt-4 inline-block px-6 py-3 border-2 border-black rounded hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
-            >
-              Browse Gigs
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="mb-12">
+      <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8">
+        <h2 className="text-2xl font-semibold mb-6">Gig Orders</h2>
+        {orders.length === 0 ? (
+          <div className="text-center py-12 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,0.5)]">
+            <h2 className="text-xl font-semibold mb-2">
+              {user?.isSeller
+                ? "No gig orders received yet"
+                : "No gig orders placed yet"}
+            </h2>
+            <p className="text-gray-600 mb-4">
+              {user?.isSeller
+                ? "You haven't received any gig orders yet."
+                : "You haven't placed any gig orders yet."}
+            </p>
+            {!user?.isSeller && (
+              <Link
+                href="/gigs"
+                className="mt-4 inline-block px-6 py-3 border-2 border-black rounded-lg rounded-br-3xl hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] hover:shadow-[6px_6px_0px_0px_rgba(65,105,225,1)] transition-all"
+              >
+                Browse Gigs
+              </Link>
+            )}
+          </div>
+        ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b-2 border-black">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Gig
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Price
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     {user?.isSeller ? "Buyer" : "Seller"}
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Payment Status
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Escrow Status
                   </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Actions
                   </th>
-
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                     Message
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200">
                 {orders.map((order) => (
-                  <tr key={order._id}>
+                  <tr
+                    key={order._id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-4 py-4">
                       <div className="text-sm font-medium text-gray-900">
                         {order.gigId?.title || "Gig Title"}
@@ -302,10 +267,9 @@ const OrdersPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <img
-                            className="h-10 w-10 rounded-full object-cover"
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10">
+                          <Image
                             src={
                               user?.isSeller
                                 ? order.buyerId?.profilePic ||
@@ -318,9 +282,11 @@ const OrdersPage = () => {
                                 ? order.buyerId?.username || "Buyer"
                                 : order.sellerId?.username || "Seller"
                             }
+                            fill
+                            className="rounded-full object-cover border-2 border-black"
                           />
                         </div>
-                        <div className="ml-4">
+                        <div>
                           <div className="text-sm font-medium text-gray-900">
                             {user?.isSeller
                               ? order.buyerId?.username || "Buyer"
@@ -331,12 +297,12 @@ const OrdersPage = () => {
                     </td>
                     <td className="px-4 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${
                           order.isPaid === "completed"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-green-100 text-green-800 border-green-800"
                             : order.isPaid === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-800"
+                              : "bg-red-100 text-red-800 border-red-800"
                         }`}
                       >
                         {order.isPaid === "completed"
@@ -349,79 +315,73 @@ const OrdersPage = () => {
                     <td className="px-4 py-4">
                       {order.escrowId ? (
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${
                             order.escrowId.status === "holding"
-                              ? "bg-blue-100 text-blue-800"
+                              ? "bg-blue-100 text-blue-800 border-blue-800"
                               : order.escrowId.status === "waitingToRelease"
-                                ? "bg-yellow-100 text-yellow-800"
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-800"
                                 : order.escrowId.status === "released"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  ? "bg-green-100 text-green-800 border-green-800"
+                                  : "bg-gray-100 text-gray-800 border-gray-800"
                           }`}
                         >
                           {order.escrowId.status}
                         </span>
                       ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border-2 border-gray-800">
                           No Escrow
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-2">
-                        {!user?.isSeller && order.isPaid !== "completed" && (
-                          <button
-                            onClick={() => handleStripePayment(order)}
-                            disabled={paymentLoading}
-                            className={`w-full px-4 py-2 rounded border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]  ${
-                              paymentLoading
-                                ? "bg-gray-300 cursor-not-allowed"
-                                : " hover:bg-green-400 "
-                            } `}
-                          >
-                            {paymentLoading
-                              ? "Processing..."
-                              : "Pay with Stripe"}
-                          </button>
-                        )}
-                        {order.isPaid === "completed" && (
-                          <WorkStatusButton
-                            order={order}
-                            isSeller={user?.isSeller}
-                            onStatusUpdate={handleStatusUpdate}
-                            disabled={
-                              !user?.isSeller && !order.sellerWorkStatus
-                            }
-                            disabledMessage={
-                              !user?.isSeller && !order.sellerWorkStatus
-                                ? "Seller must complete work first"
-                                : ""
-                            }
-                          />
-                        )}
-                        {!user?.isSeller && order.isPaid !== "completed" && (
-                          <button
-                            onClick={() => handleDeleteClick(order)}
-                            className="w-full px-3 py-2 border-2 border-black  rounded shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:bg-red-300"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
+                    <td className="px-4 py-4 space-y-2 min-w-[180px]">
+                      {!user?.isSeller && order.isPaid !== "completed" && (
+                        <button
+                          onClick={() => handleStripePayment(order)}
+                          disabled={paymentLoading}
+                          className={`w-full px-3 py-2 rounded-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] text-sm ${
+                            paymentLoading
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "hover:bg-green-400"
+                          } transition-all`}
+                        >
+                          {paymentLoading ? "Processing..." : "Pay with Stripe"}
+                        </button>
+                      )}
+                      {order.isPaid === "completed" && (
+                        <WorkStatusButton
+                          order={order}
+                          isSeller={user?.isSeller}
+                          onStatusUpdate={handleStatusUpdate}
+                          disabled={!user?.isSeller && !order.sellerWorkStatus}
+                          disabledMessage={
+                            !user?.isSeller && !order.sellerWorkStatus
+                              ? "Seller must complete work first"
+                              : ""
+                          }
+                        />
+                      )}
+                      {!user?.isSeller && order.isPaid !== "completed" && (
+                        <button
+                          onClick={() => handleDeleteClick(order)}
+                          className="w-full px-3 py-2 border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(255,99,132,1)] hover:bg-red-300 text-sm transition-all"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <button
                         onClick={() => handleMessageClick(order)}
                         disabled={messageLoading}
-                        className="w-fit border-2 border-black text-white rounded-full p-3 hover:bg-teal-400"
+                        className="p-2 border-2 border-black rounded-full hover:bg-teal-400 shadow-[4px_4px_0px_0px_rgba(0,128,128,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(0,128,128,1)] transition-all"
                       >
                         {messageLoading ? (
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
                         ) : (
                           <Image
                             src="/images/Navbar/Chat.svg"
-                            width={24}
-                            height={24}
+                            width={20}
+                            height={20}
                             alt="chat"
                           />
                         )}
@@ -432,44 +392,46 @@ const OrdersPage = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Bid Orders Section */}
-      <h2 className="text-2xl font-semibold mb-4">Project Orders</h2>
-      {bidOrders.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-2">
-            {user?.isSeller
-              ? "No project orders received yet"
-              : "No project orders placed yet"}
-          </h2>
-          <p className="text-gray-600 mb-4">
-            {user?.isSeller
-              ? "You haven't received any project orders yet."
-              : "You haven't placed any project orders yet."}
-          </p>
-          {!user?.isSeller && (
-            <Link
-              href="/allBidPost"
-              className="mt-4 inline-block px-6 py-3 border-2 border-black rounded hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] transition-colors"
-            >
-              Browse Projects
-            </Link>
-          )}
-        </div>
-      ) : (
-        <BidOrders
-          orders={bidOrders}
-          isSeller={user?.isSeller}
-          onStatusUpdate={handleStatusUpdate}
-        />
-      )}
+      <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+        <h2 className="text-2xl font-semibold mb-6">Project Orders</h2>
+        {bidOrders.length === 0 ? (
+          <div className="text-center py-12 bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,0.5)]">
+            <h2 className="text-xl font-semibold mb-2">
+              {user?.isSeller
+                ? "No project orders received yet"
+                : "No project orders placed yet"}
+            </h2>
+            <p className="text-gray-600 mb-4">
+              {user?.isSeller
+                ? "You haven't received any project orders yet."
+                : "You haven't placed any project orders yet."}
+            </p>
+            {!user?.isSeller && (
+              <Link
+                href="/allBidPost"
+                className="mt-4 inline-block px-6 py-3 border-2 border-black rounded-lg rounded-br-3xl hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,1)] hover:shadow-[6px_6px_0px_0px_rgba(65,105,225,1)] transition-all"
+              >
+                Browse Projects
+              </Link>
+            )}
+          </div>
+        ) : (
+          <BidOrders
+            orders={bidOrders}
+            isSeller={user?.isSeller}
+            onStatusUpdate={handleStatusUpdate}
+          />
+        )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Delete Order</h2>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this order? This action cannot be
@@ -481,14 +443,14 @@ const OrdersPage = () => {
                   setShowDeleteDialog(false);
                   setSelectedOrder(null);
                 }}
-                className="px-4 py-2 border-2 border-black rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 border-2 border-black rounded-lg rounded-br-3xl hover:bg-gray-100 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]"
                 disabled={deleteLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                className="px-4 py-2 border-2 border-black bg-red-500 text-white rounded-lg rounded-br-3xl hover:bg-red-600 transition-all shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(255,99,132,1)]"
                 disabled={deleteLoading}
               >
                 {deleteLoading ? "Deleting..." : "Delete"}
@@ -500,7 +462,7 @@ const OrdersPage = () => {
 
       {showPaymentDialog && selectedOrder && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Complete Payment</h2>
             <Elements stripe={stripePromise}>
               <StripePaymentForm

@@ -32,7 +32,6 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
         return;
       }
 
-      // Get the other user's ID (seller or buyer)
       const otherUserId = isSeller ? order.buyerId?._id : order.sellerId?._id;
 
       if (!otherUserId) {
@@ -40,7 +39,6 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
         return;
       }
 
-      // Check if chat exists or create new chat
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/chat/accessChat`,
         {
@@ -61,7 +59,6 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
         throw new Error(data.message || "Failed to access chat");
       }
 
-      // Redirect to chat page with the chat ID
       router.push(`/chat/${data._id}`);
     } catch (error) {
       console.error("Error accessing chat:", error);
@@ -85,37 +82,40 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-black">
+    <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b-2 border-black">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Project
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Price
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 {isSeller ? "Buyer" : "Seller"}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Payment Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Escrow Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Actions
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
                 Message
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200">
             {orders.map((order) => (
-              <tr key={order._id}>
+              <tr
+                key={order._id}
+                className="hover:bg-gray-50 transition-colors"
+              >
                 <td className="px-4 py-4">
                   <div className="text-sm font-medium text-gray-900">
                     {order.projectId?.title || "Project Title"}
@@ -125,10 +125,9 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
                   <div className="text-sm text-gray-900">Rs {order.price}</div>
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <img
-                        className="h-10 w-10 rounded-full object-cover"
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-10 w-10">
+                      <Image
                         src={
                           isSeller
                             ? order.buyerId?.profilePic ||
@@ -141,9 +140,11 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
                             ? order.buyerId?.username || "Buyer"
                             : order.sellerId?.username || "Seller"
                         }
+                        fill
+                        className="rounded-full object-cover border-2 border-black"
                       />
                     </div>
-                    <div className="ml-4">
+                    <div>
                       <div className="text-sm font-medium text-gray-900">
                         {isSeller
                           ? order.buyerId?.username || "Buyer"
@@ -154,12 +155,12 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
                 </td>
                 <td className="px-4 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${
                       order.isPaid === "completed"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 text-green-800 border-green-800"
                         : order.isPaid === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
+                          ? "bg-yellow-100 text-yellow-800 border-yellow-800"
+                          : "bg-red-100 text-red-800 border-red-800"
                     }`}
                   >
                     {order.isPaid === "completed"
@@ -172,58 +173,56 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
                 <td className="px-4 py-4">
                   {order.escrowId ? (
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border-2 ${
                         order.escrowId.status === "holding"
-                          ? "bg-blue-100 text-blue-800"
+                          ? "bg-blue-100 text-blue-800 border-blue-800"
                           : order.escrowId.status === "waitingToRelease"
-                            ? "bg-yellow-100 text-yellow-800"
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-800"
                             : order.escrowId.status === "released"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-green-100 text-green-800 border-green-800"
+                              : "bg-gray-100 text-gray-800 border-gray-800"
                       }`}
                     >
                       {order.escrowId.status}
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border-2 border-gray-800">
                       No Escrow
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-4">
-                  <div className="flex flex-col gap-2">
-                    {!isSeller && order.isPaid === "pending" && (
-                      <Button
-                        onClick={() => handlePay(order)}
-                        className="w-full"
-                      >
-                        Pay Now
-                      </Button>
-                    )}
-                    {order.isPaid === "completed" && (
-                      <WorkStatusButton
-                        order={order}
-                        isSeller={isSeller}
-                        onStatusUpdate={onStatusUpdate}
-                        disabled={!isSeller && !order.sellerWorkStatus}
-                        disabledMessage={
-                          !isSeller && !order.sellerWorkStatus
-                            ? "Seller must complete work first"
-                            : ""
-                        }
-                      />
-                    )}
-                  </div>
+                <td className="px-4 py-4 space-y-2 min-w-[180px]">
+                  {!isSeller && order.isPaid === "pending" && (
+                    <Button
+                      onClick={() => handlePay(order)}
+                      className="w-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] hover:bg-green-400 transition-all"
+                    >
+                      Pay Now
+                    </Button>
+                  )}
+                  {order.isPaid === "completed" && (
+                    <WorkStatusButton
+                      order={order}
+                      isSeller={isSeller}
+                      onStatusUpdate={onStatusUpdate}
+                      disabled={!isSeller && !order.sellerWorkStatus}
+                      disabledMessage={
+                        !isSeller && !order.sellerWorkStatus
+                          ? "Seller must complete work first"
+                          : ""
+                      }
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-4">
                   <button
                     onClick={() => handleMessageClick(order)}
-                    className="w-fit border-2 border-black text-white rounded-full p-3 hover:bg-teal-400"
+                    className="p-2 border-2 border-black rounded-full hover:bg-teal-400 shadow-[4px_4px_0px_0px_rgba(0,128,128,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(0,128,128,1)] transition-all"
                   >
                     <Image
                       src="/images/Navbar/Chat.svg"
-                      width={24}
-                      height={24}
+                      width={20}
+                      height={20}
                       alt="chat"
                     />
                   </button>
@@ -237,9 +236,11 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
       {/* Payment Dialog */}
       {showPaymentDialog && selectedOrder && (
         <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-          <DialogContent>
+          <DialogContent className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
             <DialogHeader>
-              <DialogTitle>Complete Payment</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">
+                Complete Payment
+              </DialogTitle>
             </DialogHeader>
             <Elements stripe={stripePromise}>
               <StripePaymentForm
