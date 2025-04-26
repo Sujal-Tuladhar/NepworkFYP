@@ -125,8 +125,12 @@ io.on("connection", (socket) => {
   console.log("🟢Connected To Socket.io");
 
   socket.on("setup", (userData) => {
+    if (!userData || !userData._id) {
+      console.log("Invalid user data received");
+      return;
+    }
     socket.join(userData._id);
-    console.log("User data:", userData?._id);
+    console.log("User data:", userData._id);
     socket.emit("connected");
   });
 
