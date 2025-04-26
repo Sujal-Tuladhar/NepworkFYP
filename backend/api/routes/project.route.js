@@ -2,6 +2,9 @@ import express from "express";
 import Project from "../models/project.model.js";
 import { validate } from "../middleware/validate.js";
 import createError from "../utils/createError.js";
+import Bid from "../models/bid.model.js";
+import Order from "../models/order.model.js";
+import Escrow from "../models/escrow.model.js";
 
 const router = express.Router();
 
@@ -216,6 +219,95 @@ router.put("/editProject/:projectId", validate, async (req, res, next) => {
     return res.status(200).json(updatedProject);
   } catch (err) {
     console.error("Error in editProject:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+/*  UPDATE – PUT /api/projects/selectBid/:projectId/:bidId */
+router.put("/selectBid/:projectId/:bidId", validate, async (req, res, next) => {
+  try {
+    const { projectId, bidId } = req.params;
+
+    // Find the project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return next(createError(404, "Project not found"));
+    }
+
+    // Check if user is the project owner
+    if (project.clientId.toString() !== req.user._id.toString()) {
+      return next(createError(403, "Only project owner can select bids"));
+    }
+
+    // Check if project is still open
+    if (project.status !== "open") {
+      return next(createError(400, "Project is no longer open for bidding"));
+    }
+
+    // Find the selected bid
+    const selectedBid = await Bid.findById(bidId);
+    if (!selectedBid) {
+      return next(createError(404, "Bid not found"));
+    }
+
+    // Create escrow for the order
+    const escrow = new Escrow({
+      amount: selectedBid.amount,
+      status: "holding",
+      sellerConfirmed: false,
+      buyerConfirmed: false,
+      adminApproved: false,
+    });
+    await escrow.save();
+
+    // Create order for the project
+    const order = new Order({
+      projectId: projectId,
+      buyerId: project.clientId,
+      sellerId: selectedBid.bidderId,
+      escrowId: escrow._id,
+      price: selectedBid.amount,
+      workStatus: false,
+      paymentMethod: "khalti",
+      isPaid: "pending",
+    });
+    await order.save();
+
+    // Update the project status to awarded and set selected bid
+    const updatedProject = await Project.findByIdAndUpdate(
+      projectId,
+      {
+        $set: {
+          status: "awarded",
+          selectedBidId: bidId,
+        },
+      },
+      { new: true }
+    );
+
+    // Update the selected bid status to accepted
+    await Bid.findByIdAndUpdate(bidId, {
+      $set: { status: "accepted" },
+    });
+
+    // Update all other bids for this project to rejected
+    await Bid.updateMany(
+      {
+        projectId: projectId,
+        _id: { $ne: bidId },
+      },
+      {
+        $set: { status: "rejected" },
+      }
+    );
+
+    return res.status(200).json({
+      message: "Bid selected and order created successfully",
+      project: updatedProject,
+      order: order,
+    });
+  } catch (err) {
+    console.error("Error in selectBid:", err);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });

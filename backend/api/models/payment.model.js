@@ -21,7 +21,12 @@ const paymentSchema = new mongoose.Schema(
     gigId: {
       type: Schema.Types.ObjectId,
       ref: "Gig",
-      required: true,
+      required: false,
+    },
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+      required: false,
     },
     buyerId: {
       type: Schema.Types.ObjectId,
@@ -65,6 +70,16 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add validation to ensure either gigId or projectId is present
+paymentSchema.pre("save", function (next) {
+  if (!this.gigId && !this.projectId) {
+    const err = new Error("Either gigId or projectId is required.");
+    next(err);
+  } else {
+    next();
+  }
+});
 
 const Payment = mongoose.model("Payment", paymentSchema);
 export default Payment;

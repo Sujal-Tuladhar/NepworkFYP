@@ -277,19 +277,11 @@ router.post("/initialize-stripe", validate, async (req, res) => {
       });
     }
 
-    // Find the gig
-    const gig = await Gig.findById(order.gigId);
-    if (!gig) {
-      return res.status(404).json({
-        success: false,
-        message: "Gig not found",
-      });
-    }
-
     // Create a payment record
     const payment = await Payment.create({
       orderId: order._id,
-      gigId: order.gigId,
+      gigId: order.gigId || null,
+      projectId: order.projectId || null,
       buyerId: order.buyerId,
       sellerId: order.sellerId,
       amount: order.price,
@@ -383,6 +375,7 @@ router.post("/verify-stripe", validate, async (req, res) => {
               ...payment.toObject(),
               status: "success",
               paymentConfirmation: true,
+              escrowId: existingEscrow._id,
             },
           });
         }
@@ -392,6 +385,9 @@ router.post("/verify-stripe", validate, async (req, res) => {
           orderId: payment.orderId,
           amount: payment.amount,
           status: "holding",
+          sellerConfirmed: false,
+          buyerConfirmed: false,
+          adminApproved: false,
         });
 
         // Update order status with escrow ID
@@ -408,6 +404,7 @@ router.post("/verify-stripe", validate, async (req, res) => {
             ...payment.toObject(),
             status: "success",
             paymentConfirmation: true,
+            escrowId: escrow._id,
           },
         });
 

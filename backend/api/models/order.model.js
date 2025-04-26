@@ -3,7 +3,8 @@ const { Schema } = mongoose;
 
 const orderSchema = new Schema(
   {
-    gigId: { type: Schema.Types.ObjectId, ref: "Gig", required: true },
+    gigId: { type: Schema.Types.ObjectId, ref: "Gig", required: false }, // Optional field
+    projectId: { type: Schema.Types.ObjectId, ref: "Project", required: false }, // Optional field
     sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     buyerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     escrowId: { type: Schema.Types.ObjectId, ref: "Escrow", required: false },
@@ -24,6 +25,16 @@ const orderSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Validate that either gigId or projectId is provided
+orderSchema.pre("save", function (next) {
+  if (!this.gigId && !this.projectId) {
+    const err = new Error("Either gigId or projectId is required.");
+    next(err);
+  } else {
+    next();
+  }
+});
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;

@@ -133,4 +133,77 @@ router.post("/selectBid/:bidId", validate, async (req, res, next) => {
   }
 });
 
+// Update bid status and project status
+router.post("/updateBidStatus", validate, async (req, res) => {
+  try {
+    const { bidId, status, projectId } = req.body;
+
+    if (!bidId || !status || !projectId) {
+      return res.status(400).json({
+        success: false,
+        message: "Bid ID, status, and project ID are required",
+      });
+    }
+
+    // Find the bid
+    const bid = await Bid.findById(bidId);
+    if (!bid) {
+      return res.status(404).json({
+        success: false,
+        message: "Bid not found",
+      });
+    }
+
+    // Find the project
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    // Verify that the user is the client of the project
+    if (project.clientId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this bid",
+      });
+    }
+
+    // Update bid status
+    bid.status = status;
+    await bid.save();
+
+    // Update project status to awarded and set selected bid
+    project.status = "awarded";
+    project.selectedBidId = bidId;
+    await project.save();
+
+    // Reject all other bids for this project
+    await Bid.updateMany(
+      {
+        projectId,
+        _id: { $ne: bidId },
+        status: "pending",
+      },
+      { status: "rejected" }
+    );
+
+    res.json({
+      success: true,
+      message: "Bid status updated successfully",
+      bid,
+      project,
+    });
+  } catch (error) {
+    console.error("Error updating bid status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update bid status",
+      error: error.message,
+    });
+  }
+});
+
 export default router;
