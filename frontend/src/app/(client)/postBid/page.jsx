@@ -135,7 +135,7 @@ const PostBid = () => {
 
       if (response.data) {
         toast.success("Project created successfully!");
-        router.push("/dashboard");
+        router.push("/allBidPost");
       }
     } catch (error) {
       console.error("Error creating project:", error);

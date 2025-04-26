@@ -74,9 +74,67 @@ const BidOrders = ({ orders, isSeller, onStatusUpdate }) => {
     setShowPaymentDialog(true);
   };
 
-  const handlePaymentSuccess = (paymentId) => {
-    setShowPaymentDialog(false);
-    router.push(`/payment-success?payment_id=${paymentId}`);
+  const handlePaymentSuccess = async (paymentId) => {
+    try {
+      const token = localStorage.getItem("currentUser");
+      if (!token) {
+        toast.error("Please login to continue");
+        return;
+      }
+
+      // Update order payment status and create escrow
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/order/updatePaymentStatus/${selectedOrder._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            paymentId,
+            status: "completed",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update payment status");
+      }
+
+      // Create escrow after successful payment
+      const escrowResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/escrow/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: selectedOrder._id,
+            amount: selectedOrder.price,
+            status: "holding",
+          }),
+        }
+      );
+
+      const escrowData = await escrowResponse.json();
+
+      if (!escrowResponse.ok) {
+        throw new Error(escrowData.message || "Failed to create escrow");
+      }
+
+      setShowPaymentDialog(false);
+      setSelectedOrder(null);
+      router.push(`/payment-success?payment_id=${paymentId}`);
+      onStatusUpdate(); // Refresh orders to show updated status
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error(error.message || "Failed to process payment");
+    }
   };
 
   const handlePaymentCancel = () => {
