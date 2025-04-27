@@ -53,8 +53,7 @@ router.route("/accessChat").post(
   })
 );
 
-router.get(
-  "/fetchChat",
+router.get("/fetchChat",
   validate,
   asyncHandler(async (req, res) => {
     try {
@@ -77,8 +76,7 @@ router.get(
   })
 );
 
-router.post(
-  "/create-group",
+router.post("/create-group",
   validate,
   asyncHandler(async (req, res) => {
     if (!req.body.users || !req.body.name) {
@@ -111,8 +109,7 @@ router.post(
     }
   })
 );
-router.put(
-  "/rename-group",
+router.put("/rename-group",
   validate,
   asyncHandler(async (req, res) => {
     const { chatId, chatName } = req.body;
@@ -135,8 +132,7 @@ router.put(
     }
   })
 );
-router.put(
-  "/group-add",
+router.put("/group-add",
   validate,
   asyncHandler(async (req, res) => {
     const { chatId, userId } = req.body;
@@ -159,8 +155,7 @@ router.put(
     }
   })
 );
-router.put(
-  "/remove-group",
+router.put("/remove-group",
   validate,
   asyncHandler(async (req, res) => {
     const { chatId, userId } = req.body;

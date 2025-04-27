@@ -84,7 +84,6 @@ const GroupChatModal = ({ children, chats, setChats }) => {
         throw new Error("No data returned from API");
       }
 
-      // Ensure chats is an array before spreading
       setChats(Array.isArray(chats) ? [data, ...chats] : [data]);
       setSelectedUsers([]);
       setGroupChatName("");
@@ -109,75 +108,90 @@ const GroupChatModal = ({ children, chats, setChats }) => {
       <Toaster richColors position="top-right" />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <span>{children}</span>
+          <span className="cursor-pointer">{children}</span>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
           <DialogHeader>
-            <DialogTitle>Create Group Chat</DialogTitle>
+            <DialogTitle className="text-xl font-bold border-b-2 border-black pb-2">
+              Create Group Chat
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col space-y-2">
-            <label
-              htmlFor="groupName"
-              className="text-sm font-medium text-gray-700"
-            >
-              Group Name
-            </label>
-            <input
-              id="groupName"
-              type="text"
-              placeholder="Enter the group name"
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              value={groupChatName}
-              onChange={(e) => setGroupChatName(e.target.value)}
-            />
-          </div>
 
-          <div className="flex flex-col space-y-2">
-            <label
-              htmlFor="addUsers"
-              className="text-sm font-medium text-gray-700"
-            >
-              Add Users
-            </label>
-            <input
-              id="addUsers"
-              type="text"
-              placeholder="Search users..."
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-            <div className="flex flex-wrap gap-2">
-              {selectedUsers.map((u) => (
-                <UserBadgeItem
-                  key={u._id}
-                  user={u}
-                  handleFunction={() => handleDelete(u)}
-                />
-              ))}
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-2">
+              <label
+                htmlFor="groupName"
+                className="text-sm font-medium text-gray-700"
+              >
+                Group Name
+              </label>
+              <input
+                id="groupName"
+                type="text"
+                placeholder="Enter the group name"
+                className="px-4 py-2 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                value={groupChatName}
+                onChange={(e) => setGroupChatName(e.target.value)}
+              />
             </div>
-            {loading ? (
-              <div>Loading ...</div>
-            ) : (
-              searchResult
-                ?.slice(0, 4)
-                .map((user) => (
-                  <UserListItem
-                    key={user._id}
-                    user={user}
-                    handleFunction={() => handleGroup(user)}
-                  />
-                ))
-            )}
+
+            <div className="flex flex-col space-y-2">
+              <label
+                htmlFor="addUsers"
+                className="text-sm font-medium text-gray-700"
+              >
+                Add Users
+              </label>
+              <input
+                id="addUsers"
+                type="text"
+                placeholder="Search users..."
+                className="px-4 py-2 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+
+              {/* Selected Users */}
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-2 border-2 border-black rounded-lg">
+                  {selectedUsers.map((u) => (
+                    <UserBadgeItem
+                      key={u._id}
+                      user={u}
+                      handleFunction={() => handleDelete(u)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Search Results */}
+              <div className="max-h-60 overflow-y-auto border-2 border-black rounded-lg p-2">
+                {loading ? (
+                  <div className="flex justify-center items-center h-16">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+                  </div>
+                ) : (
+                  searchResult
+                    ?.slice(0, 4)
+                    .map((user) => (
+                      <UserListItem
+                        key={user._id}
+                        user={user}
+                        handleFunction={() => handleGroup(user)}
+                      />
+                    ))
+                )}
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
             <button
-              className="border-2 p-2 border-black rounded-tr-2xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]"
+              className="px-4 py-2 border-2 border-black rounded-lg rounded-br-3xl hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(65,105,225,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(65,105,225,1)] transition-all disabled:opacity-50"
               type="button"
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? "Creating..." : "Create Chat"}
+              {loading ? "Creating..." : "Create Group"}
             </button>
           </DialogFooter>
         </DialogContent>

@@ -75,8 +75,7 @@ router.delete("/deleteProject/:projectId", validate, async (req, res, next) => {
 
 /*  READ ONE – GET /api/projects/getProject/single/:projectId   */
 
-router.get(
-  "/getProject/single/:projectId",
+router.get("/getProject/single/:projectId",
   validate,
   async (req, res, next) => {
     try {

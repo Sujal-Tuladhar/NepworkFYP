@@ -257,7 +257,7 @@ export default function Orders() {
                     ${order.price}
                   </span>
                   <p className="text-sm text-gray-600 mt-1">
-                    {order.gigId.title}
+                    {order?.gigId?.title}
                   </p>
                   <p className="text-sm text-gray-500">
                     {new Date(order.createdAt).toLocaleDateString()}

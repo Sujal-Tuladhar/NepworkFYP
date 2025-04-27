@@ -6,8 +6,7 @@ import User from "../models/user.model.js";
 import Chat from "../models/chat.model.js";
 const router = express.Router();
 
-router.post(
-  "/sendMessage",
+router.post("/sendMessage",
   validate,
   asyncHandler(async (req, res, next) => {
     const { content, chatId } = req.body;
@@ -44,8 +43,7 @@ router.post(
   })
 );
 
-router.get(
-  "/allMessage/:chatId",
+router.get("/allMessage/:chatId",
   validate,
   asyncHandler(async (req, res) => {
     try {
