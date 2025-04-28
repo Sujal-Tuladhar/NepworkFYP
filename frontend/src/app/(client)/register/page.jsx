@@ -172,40 +172,40 @@ const RegisterPage = () => {
   };
 
   return (
-    <div>
-      <div className="p-3 flex items-center justify-center overflow-y-hidden mt-3">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="flex items-center justify-center min-h-[calc(100vh-2rem)]">
         <Toaster richColors position="top-right" />
-        <div className="max-w-[50rem] p-2 bg-white border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,128,0,0.5)]">
+        <div className="w-full max-w-4xl bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] hover:shadow-[8px_8px_0px_0px_rgba(129,197,255,1)] transition-shadow">
           <form onSubmit={handleSubmit}>
-            <div className="flex justify-between items-center">
-              <h1 className="text-xl underline font-semibold">
-                Create a New Account
-              </h1>
-              <h2 className="text-2xl p-2 font-bold border-b-2 border-l-2 text-gray-800">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Create a New Account</h1>
+              <h2 className="text-2xl font-bold p-2 border-b-2 border-l-2 border-black">
                 Register
               </h2>
             </div>
-            <div className="flex flex-col md:flex-row gap-5">
-              {/* Left */}
-              <div className="md:w-1/2 px-1 py-5">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="name">Username</label>
+
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Left Column */}
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Username</label>
                   <input
                     type="text"
                     name="username"
                     placeholder="Username"
-                    className="border-2 p-1"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                   />
                 </div>
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="email">E-Mail</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">E-Mail</label>
                   <div className="relative">
                     <input
                       type="email"
                       name="email"
                       placeholder="E-Mail"
-                      className="border-2 p-1 w-full"
+                      className="w-full p-2 border-2 border-black rounded-lg pr-10"
                       value={user.email}
                       onChange={handleEmailChange}
                       disabled={otpSent}
@@ -215,14 +215,56 @@ const RegisterPage = () => {
                         type="button"
                         onClick={handleSendOtp}
                         disabled={sendingOtp}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 p-1 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 transition-all"
                       >
                         {sendingOtp ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                         ) : (
-                          <div className="border-2 border-gray-400 rounded-full p-0.5 cursor-pointer bg-gray-400">
+                          <svg
+                            className="h-5 w-5 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {otpSent && (
+                  <div className="space-y-2">
+                    <label className="font-medium">OTP</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="otp"
+                        placeholder="Enter 6-digit OTP"
+                        className="w-full p-2 border-2 border-black rounded-lg pr-10"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        maxLength={6}
+                        disabled={otpVerified}
+                      />
+                      {otp.length === 6 && !otpVerified && (
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={verifyingOtp}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 p-1 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                        >
+                          {verifyingOtp ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          ) : (
                             <svg
-                              className="h-5 w-5 text-black"
+                              className="h-5 w-5 text-white"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -234,60 +276,13 @@ const RegisterPage = () => {
                                 d="M5 13l4 4L19 7"
                               />
                             </svg>
-                          </div>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {otpSent && (
-                  <div className="flex flex-col gap-2 mt-3">
-                    <div className="">
-                      <label htmlFor="otp">OTP</label>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="otp"
-                        placeholder="Enter 6-digit OTP"
-                        className="border-2 p-1 w-full"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        maxLength={6}
-                        disabled={otpVerified}
-                      />
-                      {otp.length === 6 && !otpVerified && (
-                        <button
-                          type="button"
-                          onClick={handleVerifyOtp}
-                          disabled={verifyingOtp}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                        >
-                          {verifyingOtp ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-                          ) : (
-                            <div className="border-2 border-gray-400 rounded-full p-0.5 cursor-pointer bg-gray-400">
-                              <svg
-                                className="h-5 w-5 text-black"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            </div>
                           )}
                         </button>
                       )}
                       {otpVerified && (
-                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-500 p-1 rounded-lg border-2 border-black">
                           <svg
-                            className="h-5 w-5 text-green-500"
+                            className="h-5 w-5 text-white"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -303,7 +298,7 @@ const RegisterPage = () => {
                       )}
                     </div>
                     {resendTimer > 0 ? (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-600">
                         Resend OTP in {resendTimer}s
                       </p>
                     ) : (
@@ -311,41 +306,44 @@ const RegisterPage = () => {
                         type="button"
                         onClick={handleSendOtp}
                         disabled={sendingOtp}
-                        className="text-sm border-2 w-fit px-3  border-black rounded-tr-2xl shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]"
+                        className="text-sm px-3 py-1 border-2 border-black rounded-lg rounded-br-3xl bg-blue-200 shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(129,197,255,1)] transition-shadow"
                       >
                         Resend OTP
                       </button>
                     )}
                   </div>
                 )}
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="password">Password</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Password</label>
                   <input
                     type="password"
                     name="password"
                     placeholder="Password"
-                    className="border-2 p-1"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                   />
                 </div>
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="confirmPassword">Confirm Password</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Confirm Password</label>
                   <input
                     type="password"
                     name="confirmPassword"
                     placeholder="Confirm Password"
-                    className="border-2 p-1"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                   />
                 </div>
               </div>
-              {/* Right */}
-              <div className="md:w-1/2 p-4 mt-1">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="country">Country</label>
+
+              {/* Right Column */}
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Country</label>
                   <select
                     name="country"
-                    className="w-full p-2 border-2"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                     value={user.country}
                   >
@@ -357,54 +355,73 @@ const RegisterPage = () => {
                     ))}
                   </select>
                 </div>
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="phone">Phone No</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Phone No</label>
                   <input
                     type="phone"
                     name="phone"
                     placeholder="+977-98XXXXXXXX"
-                    className="border-2 p-1"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                   />
                 </div>
-                <div className="mt-3">
-                  <label htmlFor="profilePic">Profile Picture</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">Profile Picture</label>
                   <input
                     type="file"
-                    className="border-2 p-1 mt-1 rounded-br-3xl w-full"
+                    className="w-full p-2 border-2 border-black rounded-lg rounded-br-3xl file:mr-4 file:py-1 file:px-4 file:border-2 file:border-black file:rounded-lg file:bg-white file:text-black file:cursor-pointer hover:file:bg-gray-100"
                     onChange={(e) => setFile(e.target.files[0])}
                   />
                 </div>
-                <div className="flex flex-col gap-2 mt-3">
-                  <label htmlFor="desc">User Description</label>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-medium">User Description</label>
                   <textarea
                     placeholder="A short description of yourself"
                     name="desc"
-                    cols="5"
-                    rows="7"
-                    className="border-2 p-1 text-black h-20"
+                    rows="4"
+                    className="w-full p-2 border-2 border-black rounded-lg"
                     onChange={handleChange}
                   />
                 </div>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading || !otpVerified}
-              className={`px-12 py-1.5 bg-blue-200 border-2 rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
-                loading || !otpVerified ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {loading ? "Registering..." : "Register"}
-            </button>
+
+            <div className="mt-8 flex justify-center">
+              <button
+                type="submit"
+                disabled={loading || !otpVerified}
+                className={`px-8 py-2 text-lg font-bold border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(129,197,255,1)] transition-all ${
+                  loading || !otpVerified
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-200 hover:bg-blue-300"
+                }`}
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                    Registering...
+                  </span>
+                ) : (
+                  "Register"
+                )}
+              </button>
+            </div>
           </form>
-          <hr className="border-t-4 border-black mt-5" />
-          <p className="text-center mt-2">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-500 underline">
-              Login
-            </Link>
-          </p>
+
+          <div className="mt-6 pt-4 border-t-2 border-black">
+            <p className="text-center">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-bold text-blue-600 hover:underline"
+              >
+                Login
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

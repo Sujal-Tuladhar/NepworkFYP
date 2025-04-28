@@ -183,55 +183,16 @@ export default function ProfilePage() {
     }
   };
 
-  if (!isLoggedIn) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg">Please log in to view your profile</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-18 w-18 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg text-red-500">Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="underline text-3xl">Profile</CardTitle>
+      <Card className="border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+        <CardHeader className="flex flex-row items-center justify-between border-b-2 py-4 border-black">
+          <CardTitle className="text-3xl font-bold">Profile</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border-2 rounded-sm p-1.5 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
-              <Label htmlFor="seller-status">Seller Status</Label>
+            <div className="flex items-center gap-2 border-2 border-black rounded-lg rounded-br-3xl p-2 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
+              <Label htmlFor="seller-status" className="font-medium">
+                Seller Status
+              </Label>
               <div className="relative group">
                 <Switch
                   id="seller-status"
@@ -241,27 +202,16 @@ export default function ProfilePage() {
                   }
                   disabled={user?.isSeller}
                   className={`
-        border-2 border-black
-        data-[state=checked]:bg-gray-200
-        data-[state=unchecked]:bg-gray-200
-        [&>span]:border-2 [&>span]:border-black
-        ${user?.isSeller ? "cursor-not-allowed" : ""}
-      `}
+                    border-2 border-black
+                    data-[state=checked]:bg-gray-200
+                    data-[state=unchecked]:bg-gray-200
+                    [&>span]:border-2 [&>span]:border-black
+                    ${user?.isSeller ? "cursor-not-allowed" : ""}
+                  `}
                 />
                 {user?.isSeller && (
-                  <div
-                    className="
-        absolute -top-10 left-1/2 -translate-x-1/2
-        bg-gray-800 text-white text-xs px-2 py-1 rounded
-        opacity-0 group-hover:opacity-100 transition-opacity duration-200
-        whitespace-nowrap pointer-events-none
-        before:content-[''] before:absolute before:top-full before:left-1/2
-        before:-translate-x-1/2 before:border-4 before:border-transparent
-        before:border-t-gray-800
-      "
-                  >
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-gray-800">
                     You are already a Seller.
-                    <span className="text-amber-300 block"></span>
                   </div>
                 )}
               </div>
@@ -269,20 +219,22 @@ export default function ProfilePage() {
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogTrigger asChild>
                 <Button
-                  className="border-2 shadow-[4px_4px_0px_0px_rgba(59,130,246,0.5)]"
+                  className="border-2 border-black rounded-lg rounded-br-3xl hover:bg-blue-400 shadow-[4px_4px_0px_0px_rgba(59,130,246,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(59,130,246,1)] transition-all"
                   variant="outline"
                 >
                   Edit Profile
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-white">
+              <DialogContent className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
                 <DialogHeader>
-                  <DialogTitle>Edit Profile</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold border-b-2 border-black pb-2">
+                    Edit Profile
+                  </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleEditSubmit} className="space-y-4">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative">
-                      <Avatar className="h-24 w-24">
+                      <Avatar className="h-24 w-24 border-2 border-black">
                         <AvatarImage
                           src={
                             previewImage ||
@@ -297,7 +249,7 @@ export default function ProfilePage() {
                       </Avatar>
                       <label
                         htmlFor="profilePic"
-                        className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 border-2 border-black cursor-pointer hover:bg-gray-100 transition-colors"
+                        className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 border-2 border-black cursor-pointer hover:bg-gray-100 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -333,9 +285,12 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username" className="font-medium">
+                      Username
+                    </Label>
                     <Input
                       id="username"
+                      className="border-2 border-black"
                       value={editForm.username}
                       onChange={(e) =>
                         setEditForm({ ...editForm, username: e.target.value })
@@ -343,10 +298,13 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="font-medium">
+                      Email
+                    </Label>
                     <Input
                       id="email"
                       type="email"
+                      className="border-2 border-black"
                       value={editForm.email}
                       onChange={(e) =>
                         setEditForm({ ...editForm, email: e.target.value })
@@ -354,9 +312,12 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="font-medium">
+                      Phone
+                    </Label>
                     <Input
                       id="phone"
+                      className="border-2 border-black"
                       value={editForm.phone}
                       onChange={(e) =>
                         setEditForm({ ...editForm, phone: e.target.value })
@@ -364,9 +325,12 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country" className="font-medium">
+                      Country
+                    </Label>
                     <Input
                       id="country"
+                      className="border-2 border-black"
                       value={editForm.country}
                       onChange={(e) =>
                         setEditForm({ ...editForm, country: e.target.value })
@@ -374,16 +338,22 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="desc">Description</Label>
+                    <Label htmlFor="desc" className="font-medium">
+                      Description
+                    </Label>
                     <Textarea
                       id="desc"
+                      className="border-2 border-black"
                       value={editForm.desc}
                       onChange={(e) =>
                         setEditForm({ ...editForm, desc: e.target.value })
                       }
                     />
                   </div>
-                  <Button type="submit" className="w-full">
+                  <Button
+                    type="submit"
+                    className="w-full border-2 border-black hover:bg-green-400 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] transition-all"
+                  >
                     Save Changes
                   </Button>
                 </form>
@@ -393,14 +363,16 @@ export default function ProfilePage() {
               <DialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  className="text-black bg-white border-2 shadow-[4px_4px_0px_0px_rgba(255,99,132,0.5)]"
+                  className="border-2 border-black hover:bg-red-400 shadow-[4px_4px_0px_0px_rgba(239,68,68,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)] transition-all"
                 >
                   Delete Account
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-white">
+              <DialogContent className="bg-white border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
                 <DialogHeader>
-                  <DialogTitle>Delete Account</DialogTitle>
+                  <DialogTitle className="text-2xl font-bold border-b-2 border-black pb-2">
+                    Delete Account
+                  </DialogTitle>
                   <DialogDescription>
                     Are you sure you want to delete your account? This action
                     cannot be undone.
@@ -408,14 +380,14 @@ export default function ProfilePage() {
                 </DialogHeader>
                 <DialogFooter className="flex gap-2">
                   <Button
-                    className="text-black border-2"
+                    className="border-2 border-black hover:bg-gray-100 transition-all"
                     variant="outline"
                     onClick={() => setShowDeleteDialog(false)}
                   >
                     Cancel
                   </Button>
                   <Button
-                    className="text-black border-2"
+                    className="border-2 border-black hover:bg-red-600 shadow-[4px_4px_0px_0px_rgba(239,68,68,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)] transition-all"
                     variant="destructive"
                     onClick={handleDelete}
                   >
@@ -426,9 +398,9 @@ export default function ProfilePage() {
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-6">
           <div className="flex items-start space-x-6 mb-8">
-            <Avatar className="h-24 w-24">
+            <Avatar className="h-24 w-24 border-2 border-black">
               <AvatarImage
                 src={user?.profilePic || "/images/icons/NoAvatar.svg"}
                 className="object-cover"
@@ -438,14 +410,14 @@ export default function ProfilePage() {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2 ">@{user?.username}</h2>
+              <h2 className="text-2xl font-bold mb-2">@{user?.username}</h2>
               <p className="text-gray-700 mb-4">
                 {user?.desc || "No description provided"}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               { label: "Username", value: user?.username },
               { label: "Email", value: user?.email },
@@ -467,7 +439,7 @@ export default function ProfilePage() {
             ].map((item, index) => (
               <div
                 key={index}
-                className="bg-white p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(59,130,246,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(59,130,246,0.5)] transition-all duration-200"
+                className="bg-white p-4 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(59,130,246,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(59,130,246,1)] transition-all duration-200"
               >
                 <h3 className="text-sm font-medium text-gray-500 mb-1.5 tracking-wide">
                   {item.label}
