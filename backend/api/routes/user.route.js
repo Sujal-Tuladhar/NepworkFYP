@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import dotenv from "dotenv";
 import asyncHandler from "express-async-handler";
+import { Bitmoro } from "bitmoro";
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,10 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Initialize Bitmoro
+const bitmoro = new Bitmoro(process.env.BITMORO_API_KEY);
+const otpHandler = bitmoro.getOtpHandler(300, 6); // 5 minutes expiry, 6 digit OTP
 
 // Configure multer storage
 const storage = new CloudinaryStorage({
@@ -147,6 +152,56 @@ router.get("/:userId", validate, async (req, res) => {
   } catch (error) {
     console.error("Error in getUserById:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// New route to send OTP for seller verification
+router.post("/sendSellerOTP", validate, async (req, res) => {
+  try {
+    const { phone } = req.user;
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number not found" });
+    }
+
+    const otp = otpHandler.registerOtp(req.user._id.toString());
+    const message = `Your Nepwork seller verification OTP is ${otp.otp}. Valid for 5 minutes.`;
+
+    const response = await otpHandler.sendOtpMessage(phone, message, "NEPWORK");
+
+    res.status(200).json({
+      message: "OTP sent successfully",
+      status: response.status,
+    });
+  } catch (error) {
+    console.error("Error in sendSellerOTP:", error);
+    res.status(500).json({ message: "Failed to send OTP" });
+  }
+});
+
+// New route to verify OTP and update seller status
+router.post("/verifySellerOTP", validate, async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const userId = req.user._id.toString();
+
+    const isValid = otpHandler.verifyOtp(userId, otp);
+    if (!isValid) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isSeller: true },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Seller status updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in verifySellerOTP:", error);
+    res.status(500).json({ message: "Failed to verify OTP" });
   }
 });
 

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label.jsx";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Check, X } from "lucide-react";
 
 export default function ProfilePage() {
   const { isLoggedIn, logout } = useAuth();
@@ -36,6 +37,9 @@ export default function ProfilePage() {
     profilePic: null,
   });
   const [previewImage, setPreviewImage] = useState(null);
+  const [showOTPInput, setShowOTPInput] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -154,33 +158,65 @@ export default function ProfilePage() {
     }
   };
 
-  const toggleSellerStatus = async () => {
+  const handleSellerToggle = async () => {
     try {
       const token = localStorage.getItem("currentUser");
-      const response = await fetch("http://localhost:7700/api/user/editUser", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...user,
-          isSeller: !user.isSeller,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:7700/api/user/sendSellerOTP",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to update seller status");
+        throw new Error("Failed to send OTP");
       }
 
-      const updatedUser = await response.json();
-      setUser(updatedUser);
-      toast.success(
-        `Seller status ${updatedUser.isSeller ? "enabled" : "disabled"}`
-      );
-    } catch (err) {
-      toast.error(err.message);
+      setShowOTPInput(true);
+      toast.success("OTP sent to your registered phone number");
+    } catch (error) {
+      toast.error(error.message);
     }
+  };
+
+  const handleOTPVerification = async () => {
+    try {
+      setIsVerifying(true);
+      const token = localStorage.getItem("currentUser");
+      const response = await fetch(
+        "http://localhost:7700/api/user/verifySellerOTP",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ otp }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Invalid OTP");
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      setShowOTPInput(false);
+      setOtp("");
+      toast.success("Seller status updated successfully");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const cancelOTPVerification = () => {
+    setShowOTPInput(false);
+    setOtp("");
   };
 
   return (
@@ -189,33 +225,6 @@ export default function ProfilePage() {
         <CardHeader className="flex flex-row items-center justify-between border-b-2 py-4 border-black">
           <CardTitle className="text-3xl font-bold">Profile</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border-2 border-black rounded-lg rounded-br-3xl p-2 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
-              <Label htmlFor="seller-status" className="font-medium">
-                Seller Status
-              </Label>
-              <div className="relative group">
-                <Switch
-                  id="seller-status"
-                  checked={user?.isSeller}
-                  onCheckedChange={
-                    user?.isSeller ? undefined : toggleSellerStatus
-                  }
-                  disabled={user?.isSeller}
-                  className={`
-                    border-2 border-black
-                    data-[state=checked]:bg-gray-200
-                    data-[state=unchecked]:bg-gray-200
-                    [&>span]:border-2 [&>span]:border-black
-                    ${user?.isSeller ? "cursor-not-allowed" : ""}
-                  `}
-                />
-                {user?.isSeller && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-gray-800">
-                    You are already a Seller.
-                  </div>
-                )}
-              </div>
-            </div>
             <Dialog open={isEditing} onOpenChange={setIsEditing}>
               <DialogTrigger asChild>
                 <Button
@@ -455,6 +464,66 @@ export default function ProfilePage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Add seller verification section */}
+          <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8 mt-5">
+            <h2 className="text-2xl font-bold mb-4">Seller Verification</h2>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 border-2 border-black rounded-lg rounded-br-3xl p-2 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)]">
+                <Label htmlFor="seller-status" className="font-medium">
+                  Seller Status
+                </Label>
+                <div className="relative group">
+                  <Switch
+                    id="seller-status"
+                    checked={user?.isSeller}
+                    onCheckedChange={
+                      user?.isSeller ? undefined : handleSellerToggle
+                    }
+                    disabled={user?.isSeller}
+                    className={`
+                      border-2 border-black
+                      data-[state=checked]:bg-gray-200
+                      data-[state=unchecked]:bg-gray-200
+                      [&>span]:border-2 [&>span]:border-black
+                      ${user?.isSeller ? "cursor-not-allowed" : ""}
+                    `}
+                  />
+                  {user?.isSeller && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-gray-800">
+                      You are already a Seller.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {showOTPInput && (
+                <div className="flex items-center gap-2 border-2 border-black rounded-lg rounded-br-3xl p-2 shadow-[4px_4px_0px_0px_rgba(59,130,246,0.5)]">
+                  <Input
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-32 border-2 border-black"
+                    maxLength={6}
+                  />
+                  <Button
+                    onClick={handleOTPVerification}
+                    disabled={isVerifying || otp.length !== 6}
+                    className="p-2 border-2 border-black rounded-lg rounded-br-3xl hover:bg-green-400 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(34,197,94,1)] transition-all"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={cancelOTPVerification}
+                    className="p-2 border-2 border-black rounded-lg rounded-br-3xl hover:bg-red-400 shadow-[4px_4px_0px_0px_rgba(239,68,68,0.5)] hover:shadow-[6px_6px_0px_0px_rgba(239,68,68,1)] transition-all"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

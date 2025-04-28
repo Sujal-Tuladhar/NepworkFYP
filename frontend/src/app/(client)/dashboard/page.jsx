@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -33,6 +38,11 @@ const Dashboard = () => {
     category: "",
     features: [],
   });
+  const [projects, setProjects] = useState([]);
+  const [completedProjects, setCompletedProjects] = useState([]);
+  const [showOTPInput, setShowOTPInput] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -65,6 +75,7 @@ const Dashboard = () => {
         setAuthChecked(true);
 
         if (userData.isSeller) {
+          // Fetch gigs
           const gigsResponse = await fetch(
             "http://localhost:7700/api/gig/getGigs",
             {
@@ -82,14 +93,23 @@ const Dashboard = () => {
               (gig) => gig.userId?._id?.toString() === userData._id?.toString()
             )
           );
-          setPagination({
-            page: gigsData.pagination.page,
-            total: gigsData.pagination.total,
-            pages: gigsData.pagination.pages,
-          });
 
-          // Fetch completed orders for seller
-          const completedOrdersResponse = await fetch(
+          // Fetch projects
+          const projectsResponse = await fetch(
+            "http://localhost:7700/api/project/getProjects",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!projectsResponse.ok) throw new Error("Failed to fetch projects");
+          const projectsData = await projectsResponse.json();
+          setProjects(projectsData.projects || []);
+
+          // Fetch orders for completed status
+          const ordersResponse = await fetch(
             "http://localhost:7700/api/order/getOrder",
             {
               headers: {
@@ -98,24 +118,24 @@ const Dashboard = () => {
             }
           );
 
-          if (!completedOrdersResponse.ok)
-            throw new Error("Failed to fetch completed orders");
-          const completedOrdersData = await completedOrdersResponse.json();
+          if (!ordersResponse.ok) throw new Error("Failed to fetch orders");
+          const ordersData = await ordersResponse.json();
 
-          const completedOrders = completedOrdersData.data.filter((order) => {
-            // For seller, we need to check if the gig belongs to the current user
-            const isSellerGig =
-              order.gigId && order.gigId.userId === userData._id;
-
-            return (
-              order.orderStatus === "completed" &&
-              order.escrowId?.status === "released" &&
-              isSellerGig
-            );
+          // Filter completed orders
+          const completedOrders = ordersData.data.filter((order) => {
+            const isSellerOrder = order.sellerId?._id === userData._id;
+            return order.orderStatus === "completed" && isSellerOrder;
           });
 
           setCompletedOrders(completedOrders);
+
+          // Filter completed projects
+          const completedProjects = completedOrders.filter(
+            (order) => order.projectId
+          );
+          setCompletedProjects(completedProjects);
         } else {
+          // Buyer logic remains the same
           const ordersResponse = await fetch(
             "http://localhost:7700/api/order/getOrder",
             {
@@ -130,15 +150,18 @@ const Dashboard = () => {
 
           setOrders(ordersData.data || []);
 
-          // Filter completed orders with released escrow for buyer
+          // Filter completed orders for buyer
           const completedOrders = ordersData.data.filter((order) => {
-            return (
-              order.orderStatus === "completed" &&
-              order.escrowId?.status === "released"
-            );
+            return order.orderStatus === "completed";
           });
 
           setCompletedOrders(completedOrders);
+
+          // Filter completed projects for buyer
+          const completedProjects = completedOrders.filter(
+            (order) => order.projectId
+          );
+          setCompletedProjects(completedProjects);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -253,6 +276,67 @@ const Dashboard = () => {
     }
   };
 
+  const handleSellerToggle = async () => {
+    try {
+      const token = localStorage.getItem("currentUser");
+      const response = await fetch(
+        "http://localhost:7700/api/user/sendSellerOTP",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send OTP");
+      }
+
+      setShowOTPInput(true);
+      toast.success("OTP sent to your registered phone number");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleOTPVerification = async () => {
+    try {
+      setIsVerifying(true);
+      const token = localStorage.getItem("currentUser");
+      const response = await fetch(
+        "http://localhost:7700/api/user/verifySellerOTP",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ otp }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Invalid OTP");
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      setShowOTPInput(false);
+      setOtp("");
+      toast.success("Seller status updated successfully");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const cancelOTPVerification = () => {
+    setShowOTPInput(false);
+    setOtp("");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -291,6 +375,117 @@ const Dashboard = () => {
                   {user?.country}
                 </span>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Active Gigs Count */}
+        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Active Gigs</p>
+              <h3 className="text-2xl font-bold mt-1">{userGigs.length}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Projects Count */}
+        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Active Projects</p>
+              <h3 className="text-2xl font-bold mt-1">{projects.length}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-purple-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Completed Gigs Count */}
+        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Completed Gigs</p>
+              <h3 className="text-2xl font-bold mt-1">
+                {completedOrders.filter((order) => order.gigId).length}
+              </h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Completed Projects Count */}
+        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Completed Projects</p>
+              <h3 className="text-2xl font-bold mt-1">
+                {completedProjects.length}
+              </h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-yellow-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
             </div>
           </div>
         </div>
