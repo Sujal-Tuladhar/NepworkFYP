@@ -306,20 +306,7 @@ export default function ProfilePage() {
                       }
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="font-medium">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      className="border-2 border-black"
-                      value={editForm.email}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, email: e.target.value })
-                      }
-                    />
-                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="font-medium">
                       Phone
