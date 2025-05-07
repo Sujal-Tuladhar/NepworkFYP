@@ -276,67 +276,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleSellerToggle = async () => {
-    try {
-      const token = localStorage.getItem("currentUser");
-      const response = await fetch(
-        "http://localhost:7700/api/user/sendSellerOTP",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to send OTP");
-      }
-
-      setShowOTPInput(true);
-      toast.success("OTP sent to your registered phone number");
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleOTPVerification = async () => {
-    try {
-      setIsVerifying(true);
-      const token = localStorage.getItem("currentUser");
-      const response = await fetch(
-        "http://localhost:7700/api/user/verifySellerOTP",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ otp }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Invalid OTP");
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      setShowOTPInput(false);
-      setOtp("");
-      toast.success("Seller status updated successfully");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const cancelOTPVerification = () => {
-    setShowOTPInput(false);
-    setOtp("");
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -351,7 +290,9 @@ const Dashboard = () => {
 
   return (
     <div
-      className={`container mx-auto p-6 ${showEditDialog || showDeleteDialog ? "overflow-hidden h-screen" : ""}`}
+      className={`container mx-auto p-6 ${
+        showEditDialog || showDeleteDialog ? "overflow-hidden h-screen" : ""
+      }`}
     >
       {/* User Profile Section */}
       <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)] mb-8">
@@ -713,8 +654,8 @@ const Dashboard = () => {
                           order.orderStatus === "completed"
                             ? "bg-green-100 text-green-800"
                             : order.orderStatus === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {order.orderStatus}
@@ -740,8 +681,8 @@ const Dashboard = () => {
                             order.escrowId.status === "released"
                               ? "bg-green-100 text-green-800"
                               : order.escrowId.status === "holding"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-yellow-100 text-yellow-800"
                           }`}
                         >
                           {order.escrowId.status}
@@ -852,6 +793,7 @@ const Dashboard = () => {
 
             {/* Scrollable form content - flex-1 makes it take remaining space */}
             <form
+              id="editForm"
               onSubmit={handleEditSubmit}
               className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4"
             >
@@ -1049,7 +991,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
       {/* Delete Dialog */}
       {showDeleteDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
