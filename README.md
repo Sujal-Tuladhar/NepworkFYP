@@ -29,7 +29,7 @@ NepWork is a specialized freelance marketplace designed to connect Nepali digita
 
 - **File Storage**: 
   - [Cloudinary](https://cloudinary.com/) for image/file hosting.
-  - [AWS S3](https://aws.amazon.com/s3/) for scalable file storage.
+ 
 
 - **Version Control**: 
   - [GitHub](https://github.com/) for version control and collaboration.
@@ -43,9 +43,4 @@ Follow the instructions below to set up the project locally:
 - [MongoDB](https://www.mongodb.com/) (can be used locally or via MongoDB Atlas)
 - [Git](https://git-scm.com/) for version control
 
-### Clone the Repository
-Clone the repository to your local machine using Git:
 
-```bash
-git clone https://github.com/your-username/nepwork.git
-cd nepwork
