@@ -1,21 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 
 interface Order {
   _id: string;
@@ -46,8 +33,6 @@ interface OrderStats {
   monthlyRevenue: { month: string; revenue: number }[];
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<OrderStats | null>(null);
@@ -58,93 +43,96 @@ export default function Orders() {
   const [totalPages, setTotalPages] = useState(1);
   const router = useRouter();
 
-  const fetchOrders = async (page: number = 1, searchQuery: string = "") => {
-    try {
-      const adminUserStr = localStorage.getItem("adminUser");
-      if (!adminUserStr) {
-        router.push("/login");
-        return;
-      }
+  const fetchOrders = useCallback(
+    async (page: number = 1, searchQuery: string = "") => {
+      try {
+        const adminUserStr = localStorage.getItem("adminUser");
+        if (!adminUserStr) {
+          router.push("/login");
+          return;
+        }
 
-      const adminUser = JSON.parse(adminUserStr);
-      if (!adminUser.accessToken) {
-        router.push("/login");
-        return;
-      }
+        const adminUser = JSON.parse(adminUserStr);
+        if (!adminUser.accessToken) {
+          router.push("/login");
+          return;
+        }
 
-      const [ordersRes, statsRes] = await Promise.all([
-        axios.get(
-          `http://localhost:7700/api/admin/orders?page=${page}&search=${searchQuery}`,
-          {
+        const [ordersRes, statsRes] = await Promise.all([
+          axios.get(
+            `http://localhost:7700/api/admin/orders?page=${page}&search=${searchQuery}`,
+            {
+              headers: {
+                Authorization: `Bearer ${adminUser.accessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          ),
+          axios.get(`http://localhost:7700/api/admin/stats`, {
             headers: {
               Authorization: `Bearer ${adminUser.accessToken}`,
               "Content-Type": "application/json",
             },
-          }
-        ),
-        axios.get(`http://localhost:7700/api/admin/stats`, {
-          headers: {
-            Authorization: `Bearer ${adminUser.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }),
-      ]);
+          }),
+        ]);
 
-      const data: OrdersResponse = ordersRes.data;
-      setOrders(data.orders);
-      setTotalPages(data.totalPages);
-      setCurrentPage(data.currentPage);
-      setStats({
-        totalOrders: statsRes.data.totalOrders,
-        totalRevenue: statsRes.data.totalRevenue,
-        statusDistribution: [
-          {
-            status: "completed",
-            count:
-              statsRes.data.totalOrders -
-              statsRes.data.recentOrders.filter(
-                (o: any) => o.status !== "completed"
+        const data: OrdersResponse = ordersRes.data;
+        setOrders(data.orders);
+        setTotalPages(data.totalPages);
+        setCurrentPage(data.currentPage);
+        setStats({
+          totalOrders: statsRes.data.totalOrders,
+          totalRevenue: statsRes.data.totalRevenue,
+          statusDistribution: [
+            {
+              status: "completed",
+              count:
+                statsRes.data.totalOrders -
+                statsRes.data.recentOrders.filter(
+                  (o: Order) => o.status !== "completed"
+                ).length,
+            },
+            {
+              status: "pending",
+              count: statsRes.data.recentOrders.filter(
+                (o: Order) => o.status === "pending"
               ).length,
-          },
-          {
-            status: "pending",
-            count: statsRes.data.recentOrders.filter(
-              (o: any) => o.status === "pending"
-            ).length,
-          },
-          {
-            status: "cancelled",
-            count: statsRes.data.recentOrders.filter(
-              (o: any) => o.status === "cancelled"
-            ).length,
-          },
-        ],
-        monthlyRevenue: Array(6)
-          .fill(0)
-          .map((_, i) => ({
-            month: new Date(
-              new Date().setMonth(new Date().getMonth() - i)
-            ).toLocaleString("default", { month: "short" }),
-            revenue: Math.floor(Math.random() * 10000) + 1000, // Mock data - replace with actual from backend
-          }))
-          .reverse(),
-      });
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        localStorage.removeItem("adminUser");
-        router.push("/login");
-      } else {
-        setError("Failed to load orders");
+            },
+            {
+              status: "cancelled",
+              count: statsRes.data.recentOrders.filter(
+                (o: Order) => o.status === "cancelled"
+              ).length,
+            },
+          ],
+          monthlyRevenue: Array(6)
+            .fill(0)
+            .map((_, i) => ({
+              month: new Date(
+                new Date().setMonth(new Date().getMonth() - i)
+              ).toLocaleString("default", { month: "short" }),
+              revenue: Math.floor(Math.random() * 10000) + 1000, // Mock data - replace with actual from backend
+            }))
+            .reverse(),
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          localStorage.removeItem("adminUser");
+          router.push("/login");
+        } else {
+          setError("Failed to load orders");
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    }
-  };
+    },
+    [router]
+  );
 
   useEffect(() => {
     fetchOrders();
-  }, [router]);
+  }, [fetchOrders]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -210,12 +198,6 @@ export default function Orders() {
                 <h3 className="text-sm font-medium">Total Orders</h3>
                 <p className="text-2xl font-bold">{stats.totalOrders}</p>
               </div>
-              <div className="p-4 border-2 border-black rounded-lg">
-                <h3 className="text-sm font-medium">Total Revenue</h3>
-                <p className="text-2xl font-bold">
-                  ${stats.totalRevenue.toFixed(2)}
-                </p>
-              </div>
             </div>
           </div>
 
@@ -241,8 +223,8 @@ export default function Orders() {
                         order.status === "completed"
                           ? "bg-green-100 text-green-800"
                           : order.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {order.status}

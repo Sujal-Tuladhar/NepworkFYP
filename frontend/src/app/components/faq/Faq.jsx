@@ -12,23 +12,23 @@ const faqData = {
     {
       question: "How do I register as a freelancer?",
       answer:
-        "Click on the 'Sign Up' button on the homepage, fill in your details, and select 'Freelancer' during the registration process.",
+        "After register and logging in go to the profile page and toggle the verify as seller button. The otp is sent to the number and enter the number and it will be verified. \n (Note: Make sure to register valid number) ",
     },
     {
       question: "How do I hire a freelancer?",
       answer:
-        "Search for the service you need, browse through the freelancers' profiles, and select one that fits your requirements. You can then contact them directly to discuss your project.",
+        "Search for the service you need, browse through the freelancers' profiles, and select one that fits your requirements. You can then contact them directly to discuss your project through chat.",
     },
     {
       question: "What are the payment options?",
       answer:
-        "We support various payment options including credit cards, PayPal, and bank transfers. Payments are processed securely through our platform.",
+        "We support payment options of Stripe for now . We have planned to add more payment options in the future.",
     },
-    {
-      question: "Is there a service fee?",
-      answer:
-        "Yes, we charge a small service fee on each transaction to maintain the platform and provide customer support.",
-    },
+    // {
+    //   question: "Is there a service fee?",
+    //   answer:
+    //     "Yes, we charge a small service fee on each transaction to maintain the platform and provide customer support.",
+    // },
   ],
 };
 

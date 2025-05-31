@@ -150,21 +150,7 @@ export default function Dashboard() {
         </div>
 
         {/* Total Revenue Card */}
-        <div className="bg-white p-6 border-2 border-black rounded-lg rounded-br-3xl shadow-[4px_4px_0px_0px_rgba(129,197,255,1)]">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 p-3 bg-yellow-100 rounded-full">
-              <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">
-                Total Revenue
-              </h3>
-              <p className="text-2xl font-bold">
-                ${stats?.totalRevenue?.toFixed(2) || "0.00"}
-              </p>
-            </div>
-          </div>
-        </div>
+       
       </div>
 
       {/* Recent Activity */}

@@ -204,7 +204,7 @@ const OrdersPage = () => {
       }
 
       // Redirect to chat page with the chat ID
-      router.push(`/chat/${data._id}`);
+      router.push(`/message`);
     } catch (error) {
       console.error("Error accessing chat:", error);
       toast.error(error.message || "Failed to access chat");
@@ -347,15 +347,15 @@ const OrdersPage = () => {
                           order.isPaid === "completed"
                             ? "bg-green-100 text-green-800 border-green-800"
                             : order.isPaid === "pending"
-                              ? "bg-yellow-100 text-yellow-800 border-yellow-800"
-                              : "bg-red-100 text-red-800 border-red-800"
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-800"
+                            : "bg-red-100 text-red-800 border-red-800"
                         }`}
                       >
                         {order.isPaid === "completed"
                           ? "Paid"
                           : order.isPaid === "pending"
-                            ? "Pending"
-                            : "Unpaid"}
+                          ? "Pending"
+                          : "Unpaid"}
                       </span>
                     </td>
                     <td className="px-4 py-4">
@@ -365,10 +365,10 @@ const OrdersPage = () => {
                             order.escrowId.status === "holding"
                               ? "bg-blue-100 text-blue-800 border-blue-800"
                               : order.escrowId.status === "waitingToRelease"
-                                ? "bg-yellow-100 text-yellow-800 border-yellow-800"
-                                : order.escrowId.status === "released"
-                                  ? "bg-green-100 text-green-800 border-green-800"
-                                  : "bg-gray-100 text-gray-800 border-gray-800"
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-800"
+                              : order.escrowId.status === "released"
+                              ? "bg-green-100 text-green-800 border-green-800"
+                              : "bg-gray-100 text-gray-800 border-gray-800"
                           }`}
                         >
                           {order.escrowId.status}

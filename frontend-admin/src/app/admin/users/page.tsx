@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -42,7 +42,7 @@ export default function Users() {
   const [userStats, setUserStats] = useState({ sellers: 0, buyers: 0 });
   const router = useRouter();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = Cookies.get("accessToken");
@@ -85,41 +85,15 @@ export default function Users() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, router]);
 
   useEffect(() => {
     fetchUsers();
-  }, [page, search, router]);
+  }, [fetchUsers]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(1);
-  };
-
-  const handleBanUser = async (userId: string, isBanned: boolean) => {
-    try {
-      const accessToken = Cookies.get("accessToken");
-      if (!accessToken) {
-        router.push("/login");
-        return;
-      }
-
-      await axios.patch(
-        `http://localhost:7700/api/admin/users/${userId}/status`,
-        { isBanned },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      fetchUsers();
-    } catch (err) {
-      console.error("Error updating user status:", err);
-      setError("Failed to update user status");
-    }
   };
 
   const pieData = [
@@ -259,16 +233,6 @@ export default function Users() {
                     <span className="text-sm text-gray-500">
                       Joined {new Date(user.createdAt).toLocaleDateString()}
                     </span>
-                    <button
-                      onClick={() => handleBanUser(user._id, !user.isBanned)}
-                      className={`px-3 py-1 text-sm font-semibold rounded-full border-2 ${
-                        user.isBanned
-                          ? "border-green-500 bg-green-100 text-green-800 hover:bg-green-200"
-                          : "border-red-500 bg-red-100 text-red-800 hover:bg-red-200"
-                      }`}
-                    >
-                      {user.isBanned ? "Unban" : "Ban"}
-                    </button>
                   </div>
                 </div>
               </li>

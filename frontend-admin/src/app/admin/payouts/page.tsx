@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -60,7 +60,7 @@ export default function Payouts() {
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
   const router = useRouter();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const accessToken = Cookies.get("accessToken");
@@ -98,11 +98,11 @@ export default function Payouts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchData();
-  }, [router]);
+  }, [fetchData]);
 
   const handleReleaseEscrow = async (escrowId: string) => {
     try {
