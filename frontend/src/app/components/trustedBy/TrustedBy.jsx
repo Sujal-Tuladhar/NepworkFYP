@@ -1,6 +1,6 @@
 import Image from "next/image";
 import React from "react";
-import "./TrustedBy.css";
+import "./trustedby.css";
 
 const TrustedBy = () => {
   return (
